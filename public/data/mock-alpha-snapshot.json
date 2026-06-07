@@ -106,6 +106,7 @@
     "transitionConfidence": 0.73,
     "description": "Flight-to-safety regime dominating. Treasury and gold momentum increasing. Equities showing distribution patterns. Volatility term structure inverted."
   },
+  "data_mode": "mock",
   "composite": {
     "signal": "defensive",
     "confidence": 0.76,

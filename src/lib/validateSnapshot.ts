@@ -249,8 +249,15 @@ export function validateSnapshot(snapshot: unknown): ValidationResult {
   // ── 7. Snapshot staleness ───────────────────────────────────────
 
   let snapshotStale = false;
+  const isMock = s.data_mode === "mock";
   const provenance = s.provenance as Record<string, unknown> | undefined;
-  if (provenance && typeof provenance.generatedAt === "string") {
+
+  if (isMock) {
+    // Mock data is validated as a baseline, not live market intelligence.
+    // Staleness warnings are suppressed for mock mode, but a disclosure
+    // note is added so the UI can show "validated mock — not live data."
+    // (handled by the dashboard UI reading data_mode)
+  } else if (provenance && typeof provenance.generatedAt === "string") {
     const generated = new Date(provenance.generatedAt);
     const hoursAgo = (Date.now() - generated.getTime()) / (1000 * 60 * 60);
     if (hoursAgo > VALIDATION_RULES.STALE_THRESHOLD_HOURS) {

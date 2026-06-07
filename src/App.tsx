@@ -124,6 +124,20 @@ export default function App() {
         </div>
       </header>
 
+      {/* Mock Data Disclosure */}
+      {!loading && snapshot && snapshot.data_mode === "mock" && validation?.valid && (
+        <div className="bg-blue-900/30 border-b border-blue-800">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-2 text-sm text-blue-300">
+            <Eye className="w-4 h-4 text-blue-400 shrink-0" />
+            <span>
+              <strong>Validated Mock Baseline</strong> — This dashboard is displaying
+              mock/demo data for governance review. It is <strong>not live market intelligence</strong>.
+              data_mode: "mock"
+            </span>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Fixture Selector */}
         <Card className="bg-slate-900 border-slate-800">

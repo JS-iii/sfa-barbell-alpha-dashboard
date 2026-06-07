@@ -55,6 +55,7 @@ export interface AlphaSnapshot {
   assets: AssetScore[];
   regime: RegimeSummary;
   composite: CompositeSignal;
+  data_mode?: "mock" | "live" | "mixed";  // v5.1: mock data must disclose itself
   metadata?: {
     staleThresholdHours?: number;
     note?: string;

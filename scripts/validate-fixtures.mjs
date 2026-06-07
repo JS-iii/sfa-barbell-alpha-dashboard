@@ -81,8 +81,9 @@ function validate(obj) {
     if (r.transitionConfidence === undefined) errors.push("regime.transitionConfidence missing");
   }
 
-  // Snapshot staleness
-  if (obj.provenance && typeof obj.provenance.generatedAt === "string") {
+  // Snapshot staleness (skip for mock data)
+  const isMock = obj.data_mode === "mock";
+  if (!isMock && obj.provenance && typeof obj.provenance.generatedAt === "string") {
     const generated = new Date(obj.provenance.generatedAt);
     const hoursAgo = (Date.now() - generated.getTime()) / (1000 * 60 * 60);
     if (hoursAgo > STALE_THRESHOLD_HOURS) {
@@ -160,7 +161,17 @@ try {
       console.log(`    ⚠️  ${file}: UNEXPECTED PASS (should have failed)`);
       allFailedAsExpected = false;
     } else {
-      console.log(`    ✅ ${file}: Correctly rejected (${result.errors.length} error${result.errors.length > 1 ? "s" : ""})`);
+      // Extract a concise reason for the failure
+      const primaryError = result.errors[0];
+      let reason = primaryError;
+      if (primaryError.includes("confidence")) reason = "confidence out of range";
+      else if (primaryError.includes("score=")) reason = "score out of range";
+      else if (primaryError.includes('status="')) reason = "invalid provider status enum";
+      else if (primaryError.includes("old")) reason = "stale snapshot";
+      else if (primaryError.includes("generatedAt")) reason = "missing provenance.generatedAt";
+      else if (primaryError.includes("source")) reason = "missing provenance.source";
+
+      console.log(`    ✅ ${file} → PASS: failed as expected: ${reason}`);
       result.errors.forEach((e) => console.log(`       - ${e}`));
     }
     console.log();
