@@ -1,0 +1,121 @@
+{
+  "provenance": {
+    "schemaVersion": "5.1.0",
+    "generatedAt": "2026-06-07T21:23:35.086Z",
+    "source": "sfa-barbell-alpha-v6",
+    "dataHash": null,
+    "generatorCommit": null
+  },
+  "data_mode": "live",
+  "providers": [
+    {
+      "name": "coingecko",
+      "status": "degraded",
+      "lastUpdated": "2026-06-07T21:22:28.799Z",
+      "latencyMs": 66284,
+      "error": "CoinGecko API unavailable (both endpoints failed)"
+    },
+    {
+      "name": "defillama",
+      "status": "active",
+      "lastUpdated": "2026-06-07T21:22:28.868Z",
+      "latencyMs": 2742
+    },
+    {
+      "name": "fred",
+      "status": "active",
+      "lastUpdated": "2026-06-07T21:22:28.870Z",
+      "latencyMs": 0,
+      "error": "FRED_API_KEY not set — using mock data (labeled as manual/fallback)"
+    },
+    {
+      "name": "unlocks",
+      "status": "active",
+      "lastUpdated": "2026-06-07T21:22:28.870Z",
+      "latencyMs": 0
+    },
+    {
+      "name": "reserves",
+      "status": "active",
+      "lastUpdated": "2026-06-07T21:22:28.870Z",
+      "latencyMs": 0
+    }
+  ],
+  "assets": [
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "regime": "uncategorized",
+      "score": 1,
+      "confidence": 0.78,
+      "classification": "neutral",
+      "providerContributions": {
+        "defillama_fees": 0.15,
+        "fred_rates": 0.1,
+        "reserves_liquidity": 0.1
+      }
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "regime": "uncategorized",
+      "score": -1,
+      "confidence": 0.78,
+      "classification": "neutral",
+      "providerContributions": {
+        "defillama_fees": 0.15,
+        "fred_rates": 0.1,
+        "reserves_liquidity": 0.1
+      }
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "regime": "barbell_core",
+      "score": -4,
+      "confidence": 0.78,
+      "classification": "neutral",
+      "providerContributions": {
+        "defillama_fees": 0.15,
+        "fred_rates": 0.15
+      }
+    },
+    {
+      "symbol": "TLT",
+      "name": "iShares 20+ Year Treasury",
+      "regime": "barbell_core",
+      "score": -4,
+      "confidence": 0.78,
+      "classification": "neutral",
+      "providerContributions": {
+        "defillama_fees": 0.15,
+        "fred_rates": 0.15
+      }
+    }
+  ],
+  "regime": {
+    "currentRegime": "uncategorized",
+    "priorRegime": "risk_on",
+    "regimeDate": "2026-06-07T21:23:35.085Z",
+    "transitionConfidence": 0.9,
+    "description": "Uncategorized regime. 10Y Treasury neutral at 4.42%; DeFi fees elevated ($54M/24h); Moderate unlock pressure ($159M in 30d). 1 provider(s) unavailable — confidence reduced."
+  },
+  "composite": {
+    "signal": "unclear",
+    "confidence": 0.9,
+    "contributingFactors": [
+      "10Y Treasury neutral at 4.42%",
+      "DeFi fees elevated ($54M/24h)",
+      "Moderate unlock pressure ($159M in 30d)"
+    ],
+    "blockingIssues": [
+      "CoinGecko global data unavailable — market context limited"
+    ]
+  },
+  "metadata": {
+    "staleThresholdHours": 24,
+    "note": "v6 server-side generated snapshot. Provider-backed with graceful degradation.",
+    "generator": "generate-snapshot.mjs",
+    "providerCount": 4
+  }
+}
