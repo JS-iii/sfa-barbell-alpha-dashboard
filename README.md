@@ -1,8 +1,9 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v6 — Server-side Snapshot Generator  
-**Prior Phase:** v5.1 — Contract Lock + Deployment Proof  
-**Next Phase:** v7 — Open Brain Observation Bridge (NOT YET AUTHORIZED)
+**Current Phase:** v7A — Open Brain Observation Bridge (Dry-Run Contract)  
+**Prior Phase:** v6 — Server-side Snapshot Generator  
+**Earlier:** v5.1 — Contract Lock + Deployment Proof  
+**Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
 **Open Brain Connected:** `false`  
@@ -16,7 +17,7 @@ A manual research and governance dashboard for the SFA (Systematic Funding Alloc
 
 **This is NOT a trading bot.**  
 **This does NOT execute orders.**  
-**This does NOT connect to Open Brain.**
+**This does NOT connect to Open Brain (v7A is dry-run only, no network writes).**
 
 ---
 
@@ -198,4 +199,4 @@ git show-ref --tags | grep sfa-barbell-dashboard
 
 ---
 
-*This is a manual research and governance dashboard. Not a trading bot.*
+*This is a manual research and g
