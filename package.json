@@ -1,13 +1,16 @@
 {
-  "name": "my-app",
+  "name": "sfa-barbell-alpha-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "5.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "validate:fixtures": "node scripts/validate-fixtures.mjs",
+    "scan:security": "node scripts/security-scan.mjs",
+    "check": "npm run validate:fixtures && npm run scan:security"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,0 +1,23 @@
+{
+  "provenance": {
+    "schemaVersion": "5.1.0"
+  },
+  "providers": [
+    { "name": "yahoo_finance", "status": "active", "lastUpdated": "2026-06-06T11:55:00Z" }
+  ],
+  "assets": [
+    { "symbol": "GLD", "name": "Gold", "regime": "flight_to_safety", "score": 72, "confidence": 0.85, "classification": "long_bias", "providerContributions": {} }
+  ],
+  "regime": {
+    "currentRegime": "flight_to_safety",
+    "priorRegime": "risk_on",
+    "regimeDate": "2026-06-06T12:00:00Z",
+    "transitionConfidence": 0.7,
+    "description": "Test"
+  },
+  "composite": {
+    "signal": "defensive",
+    "confidence": 0.7,
+    "contributingFactors": ["test"]
+  }
+}
