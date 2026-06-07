@@ -1,7 +1,7 @@
 {
   "provenance": {
     "schemaVersion": "5.1.0",
-    "generatedAt": "2026-06-07T21:36:52.609Z",
+    "generatedAt": "2026-06-07T21:48:17.977Z",
     "source": "sfa-barbell-alpha-v6",
     "dataHash": null,
     "generatorCommit": null
@@ -11,33 +11,33 @@
     {
       "name": "coingecko",
       "status": "degraded",
-      "lastUpdated": "2026-06-07T21:35:46.437Z",
-      "latencyMs": 66169,
+      "lastUpdated": "2026-06-07T21:47:11.808Z",
+      "latencyMs": 66167,
       "error": "CoinGecko API unavailable (both endpoints failed)"
     },
     {
       "name": "defillama",
       "status": "active",
-      "lastUpdated": "2026-06-07T21:35:46.506Z",
-      "latencyMs": 2620
+      "lastUpdated": "2026-06-07T21:47:11.878Z",
+      "latencyMs": 2628
     },
     {
       "name": "fred",
       "status": "active",
-      "lastUpdated": "2026-06-07T21:35:46.507Z",
+      "lastUpdated": "2026-06-07T21:47:11.881Z",
       "latencyMs": 0,
       "error": "FRED_API_KEY not set — using mock data (labeled as manual/fallback)"
     },
     {
       "name": "unlocks",
       "status": "active",
-      "lastUpdated": "2026-06-07T21:35:46.507Z",
+      "lastUpdated": "2026-06-07T21:47:11.881Z",
       "latencyMs": 0
     },
     {
       "name": "reserves",
       "status": "active",
-      "lastUpdated": "2026-06-07T21:35:46.508Z",
+      "lastUpdated": "2026-06-07T21:47:11.881Z",
       "latencyMs": 0
     }
   ],
@@ -96,7 +96,7 @@
   "regime": {
     "currentRegime": "uncategorized",
     "priorRegime": "risk_on",
-    "regimeDate": "2026-06-07T21:36:52.609Z",
+    "regimeDate": "2026-06-07T21:48:17.977Z",
     "transitionConfidence": 0.9,
     "description": "Uncategorized regime. 10Y Treasury neutral at 4.42%; DeFi fees elevated ($54M/24h); Moderate unlock pressure ($159M in 30d). 1 provider(s) unavailable — confidence reduced."
   },
