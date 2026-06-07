@@ -123,6 +123,7 @@ npm run preview
 | `npm run scan:security` | Scans for credentials, secrets, execution code |
 | `npm run check` | Runs both of the above |
 | `npm run generate:snapshot` | Fetches providers, scores assets, writes JSON artifact |
+| `npm run bridge:dry-run` | Transforms snapshot to observation draft (dry-run, no network) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -144,14 +145,19 @@ src/
   scoring/
     scoreAssets.ts             # Barbell-style asset scoring
     scoreRegime.ts             # Market regime + composite signal
+  bridge/
+    types.ts                   # OpenBrainObservationDraft contract
+    transformer.ts             # Snapshot → observation draft
+    logger.ts                  # Local JSONL dry-run logger
 public/data/
   mock-alpha-snapshot.json     # v5.1 validated mock baseline
   generated-alpha-snapshot.json # v6 provider-generated artifact
-  fixtures/                    # 5 invalid fixtures for fail-closed testing
+  fixtures/                    # 5 invalid + 2 degradation fixtures
 scripts/
   validate-fixtures.mjs        # npm run validate:fixtures
   security-scan.mjs            # npm run scan:security
   generate-snapshot.mjs        # npm run generate:snapshot
+  bridge-dry-run.mjs           # npm run bridge:dry-run
 ```
 
 ---
@@ -171,17 +177,56 @@ The FRED provider reads `FRED_API_KEY` from environment variables only. No key i
 
 ---
 
-## v7 Future Scope (NOT YET AUTHORIZED)
+## v7A: Open Brain Observation Bridge (Dry-Run Contract)
 
-v7 will introduce the Open Brain observation bridge:
+v7A exists and is the **current phase**. It transforms validated AlphaSnapshots into Open Brain observation drafts, validates them, and logs them locally as JSONL. **No network writes occur.**
+
+```
+validated AlphaSnapshot → OpenBrainObservationDraft → validation → local JSONL dry-run log
+```
+
+### What v7A Does
+
+- Transforms snapshots into `OpenBrainObservationDraft` with preserved provenance
+- Validates safety flags: `notExecutionAuthority=true`, `containsTradeOrders=false`, etc.
+- Scans for forbidden patterns (execution, wallet, credential references)
+- Logs locally to `data/dry-run/open-brain-observations-dry-run.jsonl`
+- **Never writes to any network service**
+
+### What v7A Does NOT Do
+
+- ❌ Connect to Open Brain
+- ❌ Perform network writes
+- ❌ Use API credentials
+- ❌ Create governed state
+- ❌ Authorize execution
+
+### Running the Bridge (Dry-Run)
+
+```bash
+npm run bridge:dry-run
+```
+
+This loads the default mock snapshot, transforms it, validates the draft, and appends a log entry. No data leaves your machine.
+
+---
+
+## v7B Future Scope (NOT YET AUTHORIZED)
+
+v7B would introduce live Open Brain observation writes:
 
 ```
 validated AlphaSnapshot → private server-side bridge → Open Brain observation write → human review → governed state promotion
 ```
 
-Agents will read governed state only. Raw dashboard observations will not be written directly to Open Brain.
+**v7B has not been authorized.** No live network write capability exists. No Open Brain credentials are present in this repository. No Supabase client. No service role key.
 
-**v7 has not been authorized. No v7 code exists in this repository.**
+v7B would require:
+- Server-side-only Open Brain credentials (env var, never bundled)
+- Write scope limited to observation drafts (not governed state)
+- Dry-run parity: v7A output must match v7B write format exactly
+- Idempotency, audit logging, and revocation plan
+- Separate security review and operator authorization
 
 ---
 
@@ -196,7 +241,8 @@ git show-ref --tags | grep sfa-barbell-dashboard
 |----------|-------------|
 | `sfa-barbell-dashboard-v5.1-contract-lock` | v5.1 Contract Lock + Deployment Proof |
 | `sfa-barbell-dashboard-v6-snapshot-generator` | v6 Server-side Snapshot Generator + Hardening |
+| `sfa-barbell-dashboard-v7a-bridge-contract` | v7A Open Brain Observation Bridge Dry-Run Contract |
 
 ---
 
-*This is a manual research and g
+*This is a manual research and governance dashboard. Not a trading bot.*
