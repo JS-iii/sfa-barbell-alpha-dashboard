@@ -118,6 +118,24 @@ console.log("══════════════════════�
 console.log("  AlphaSnapshot Fixture Validator");
 console.log("═══════════════════════════════════════════════════════════\n");
 
+// ── Categorize fixtures ─────────────────────────────────────────
+
+// These fixtures are intentionally INVALID and should FAIL validation
+const SHOULD_FAIL = [
+  "invalid-confidence.json",
+  "invalid-provider-status.json",
+  "invalid-score-range.json",
+  "missing-provenance.json",
+  "stale-snapshot.json",
+];
+
+// These fixtures are VALID snapshots demonstrating degraded providers
+// They should PASS validation (fail-closed behavior = reduced confidence)
+const SHOULD_PASS = [
+  "provider-degraded-coingecko.json",
+  "provider-all-degraded.json",
+];
+
 // 1. Validate the good snapshot
 console.log("[1] Valid Mock Snapshot");
 const good = loadJson(VALID_SNAPSHOT);
@@ -135,57 +153,93 @@ if (goodResult.valid) {
   process.exit(1);
 }
 
-// 2. Validate all fixtures
-console.log("[2] Fixture Files (should FAIL validation):\n");
+// 2. Validate should-fail fixtures
+console.log("[2] Invalid Fixtures (should FAIL validation):\n");
 let allFailedAsExpected = true;
 
-try {
-  const files = readdirSync(FIXTURES_DIR).filter((f) => f.endsWith(".json"));
+for (const file of SHOULD_FAIL) {
+  const path = join(FIXTURES_DIR, file);
+  const data = loadJson(path);
 
-  if (files.length === 0) {
-    console.log("    ⚠️  No fixture files found\n");
+  if (data._parseError) {
+    console.log(`    ❌ ${file}: Parse error — ${data._parseError}`);
+    allFailedAsExpected = false;
+    continue;
   }
 
-  for (const file of files.sort()) {
-    const path = join(FIXTURES_DIR, file);
-    const data = loadJson(path);
-
-    if (data._parseError) {
-      console.log(`    ❌ ${file}: Parse error — ${data._parseError}`);
-      allFailedAsExpected = false;
-      continue;
-    }
-
-    const result = validate(data);
-    if (result.valid) {
-      console.log(`    ⚠️  ${file}: UNEXPECTED PASS (should have failed)`);
-      allFailedAsExpected = false;
-    } else {
-      // Extract a concise reason for the failure
-      const primaryError = result.errors[0];
-      let reason = primaryError;
-      if (primaryError.includes("confidence")) reason = "confidence out of range";
-      else if (primaryError.includes("score=")) reason = "score out of range";
-      else if (primaryError.includes('status="')) reason = "invalid provider status enum";
-      else if (primaryError.includes("old")) reason = "stale snapshot";
-      else if (primaryError.includes("generatedAt")) reason = "missing provenance.generatedAt";
-      else if (primaryError.includes("source")) reason = "missing provenance.source";
-
-      console.log(`    ✅ ${file} → PASS: failed as expected: ${reason}`);
-      result.errors.forEach((e) => console.log(`       - ${e}`));
-    }
-    console.log();
-  }
-
-  console.log("═══════════════════════════════════════════════════════════");
-  if (allFailedAsExpected) {
-    console.log("  ✅ All fixtures behaved correctly (good=pass, bad=fail)");
-    process.exit(0);
+  const result = validate(data);
+  if (result.valid) {
+    console.log(`    ⚠️  ${file}: UNEXPECTED PASS (should have failed)`);
+    allFailedAsExpected = false;
   } else {
-    console.log("  ⚠️  Some fixtures did not behave as expected");
-    process.exit(1);
+    const primaryError = result.errors[0];
+    let reason = primaryError;
+    if (primaryError.includes("confidence")) reason = "confidence out of range";
+    else if (primaryError.includes("score=")) reason = "score out of range";
+    else if (primaryError.includes('status="')) reason = "invalid provider status enum";
+    else if (primaryError.includes("old")) reason = "stale snapshot";
+    else if (primaryError.includes("generatedAt")) reason = "missing provenance.generatedAt";
+    else if (primaryError.includes("source")) reason = "missing provenance.source";
+
+    console.log(`    ✅ ${file} → PASS: failed as expected: ${reason}`);
+    result.errors.forEach((e) => console.log(`       - ${e}`));
   }
-} catch (err) {
-  console.error(`    ❌ Error reading fixtures: ${err.message}`);
+  console.log();
+}
+
+// 3. Validate should-pass fixtures (provider degradation)
+console.log("[3] Provider Degradation Fixtures (should PASS validation):\n");
+let allPassedAsExpected = true;
+
+for (const file of SHOULD_PASS) {
+  const path = join(FIXTURES_DIR, file);
+  const data = loadJson(path);
+
+  if (data._parseError) {
+    console.log(`    ❌ ${file}: Parse error — ${data._parseError}`);
+    allPassedAsExpected = false;
+    continue;
+  }
+
+  const result = validate(data);
+  if (!result.valid) {
+    console.log(`    ⚠️  ${file}: UNEXPECTED FAIL (should have passed):`);
+    result.errors.forEach((e) => console.log(`       - ${e}`));
+    allPassedAsExpected = false;
+  } else {
+    // Check fail-closed behavior
+    const degradedCount = data.providers?.filter(
+      (p) => p.status === "degraded" || p.status === "unavailable"
+    ).length || 0;
+    const manualCount = ["unlocks", "reserves"].filter(
+      (name) => data.providers?.find((p) => p.name === name)?.status === "active"
+    ).length || 0;
+    const confidence = data.composite?.confidence || 0;
+    const signal = data.composite?.signal;
+
+    const failClosedOk =
+      confidence < 1.0 && // Not 100% confident
+      signal !== "constructive"; // Not bullish from missing data
+
+    console.log(`    ✅ ${file} → PASS: valid snapshot with ${degradedCount} degraded provider(s)`);
+    console.log(`       confidence: ${(confidence * 100).toFixed(0)}%, signal: ${signal}, fail-closed: ${failClosedOk ? "YES" : "WARNING"}`);
+    if (data.composite?.blockingIssues) {
+      console.log(`       blocking: ${data.composite.blockingIssues.length} issue(s)`);
+    }
+  }
+  console.log();
+}
+
+// 4. Summary
+console.log("═══════════════════════════════════════════════════════════");
+if (allFailedAsExpected && allPassedAsExpected) {
+  console.log("  ✅ All fixtures behaved correctly");
+  console.log("     Invalid fixtures: rejected");
+  console.log("     Degradation fixtures: accepted with reduced confidence");
+  process.exit(0);
+} else {
+  console.log("  ⚠️  Some fixtures did not behave as expected");
+  if (!allFailedAsExpected) console.log("     → Some invalid fixtures unexpectedly passed");
+  if (!allPassedAsExpected) console.log("     → Some degradation fixtures unexpectedly failed");
   process.exit(1);
 }

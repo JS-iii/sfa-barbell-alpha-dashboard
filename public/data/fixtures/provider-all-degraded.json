@@ -1,0 +1,24 @@
+{
+  "provenance": {
+    "schemaVersion": "5.1.0",
+    "generatedAt": "2026-06-07T21:00:00Z",
+    "source": "sfa-barbell-alpha-v6"
+  },
+  "data_mode": "live",
+  "providers": [
+    {"name": "coingecko", "status": "unavailable", "lastUpdated": "2026-06-07T21:00:00Z", "latencyMs": 0, "error": "Timeout after 15000ms"},
+    {"name": "defillama", "status": "unavailable", "lastUpdated": "2026-06-07T21:00:00Z", "latencyMs": 0, "error": "API returned 503"},
+    {"name": "fred", "status": "unavailable", "lastUpdated": "2026-06-07T21:00:00Z", "latencyMs": 0, "error": "Network error"},
+    {"name": "unlocks", "status": "active", "lastUpdated": "2026-06-07T21:00:00Z", "latencyMs": 0},
+    {"name": "reserves", "status": "active", "lastUpdated": "2026-06-07T21:00:00Z", "latencyMs": 0}
+  ],
+  "assets": [
+    {"symbol": "BTC", "name": "Bitcoin", "regime": "uncategorized", "score": 5, "confidence": 0.3, "classification": "neutral", "providerContributions": {"reserves_liquidity": 0.1, "unlocks_supply": 0.1}},
+    {"symbol": "ETH", "name": "Ethereum", "regime": "uncategorized", "score": 3, "confidence": 0.3, "classification": "neutral", "providerContributions": {"reserves_liquidity": 0.1}},
+    {"symbol": "GLD", "name": "SPDR Gold Shares", "regime": "uncategorized", "score": 0, "confidence": 0.3, "classification": "neutral", "providerContributions": {}},
+    {"symbol": "TLT", "name": "iShares 20+ Year Treasury", "regime": "uncategorized", "score": 0, "confidence": 0.3, "classification": "neutral", "providerContributions": {}}
+  ],
+  "regime": {"currentRegime": "uncategorized", "priorRegime": "risk_on", "regimeDate": "2026-06-07T21:00:00Z", "transitionConfidence": 0.3, "description": "Uncategorized regime. No clear signals. 3 provider(s) unavailable — confidence reduced."},
+  "composite": {"signal": "unclear", "confidence": 0.3, "contributingFactors": [], "blockingIssues": ["CoinGecko global data unavailable — market context limited", "FRED rate data unavailable — macro context limited", "DeFiLlama fee data unavailable — on-chain activity context limited", "Insufficient provider data for clear composite signal"]},
+  "metadata": {"staleThresholdHours": 24, "note": "v6 all-degraded mode: 3 providers unavailable", "providerCount": 2}
+}
