@@ -186,10 +186,15 @@ Agents will read governed state only. Raw dashboard observations will not be wri
 
 ## Seals
 
-| Seal | Commit | Description |
-|------|--------|-------------|
-| `sfa-barbell-dashboard-v5.1-contract-lock` | `7efedc0` | v5.1 Contract Lock + Deployment Proof |
-| `sfa-barbell-dashboard-v6-snapshot-generator` | `849148e` | v6 Server-side Snapshot Generator + Hardening (provenance-corrected) |
+Canonical seals are git tags. Verify current commit with:
+```bash
+git show-ref --tags | grep sfa-barbell-dashboard
+```
+
+| Seal Tag | Description |
+|----------|-------------|
+| `sfa-barbell-dashboard-v5.1-contract-lock` | v5.1 Contract Lock + Deployment Proof |
+| `sfa-barbell-dashboard-v6-snapshot-generator` | v6 Server-side Snapshot Generator + Hardening |
 
 ---
 
