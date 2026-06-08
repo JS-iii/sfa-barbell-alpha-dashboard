@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dry-run logs (generated during tests, should not leave working tree dirty)
+data/dry-run/*.jsonl
