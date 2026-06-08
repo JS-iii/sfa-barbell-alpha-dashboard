@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.4 — Local Write Simulator + Audit Chain Drill  
-**Prior Phase:** v7A.3 — Live Write Readiness Spec + Threat Model  
-**Earlier:** v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Current Phase:** v7A.5 — Replay Existing Observation Packets  
+**Prior Phase:** v7A.4 — Local Write Simulator + Audit Chain Drill  
+**Earlier:** v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -127,6 +127,7 @@ npm run preview
 | `npm run bridge:safety-drill` | 17-test safety harness (1 valid + 16 rejection cases) |
 | `npm run bridge:review-packet` | Generate review packet + human promotion gate (v7A.2) |
 | `npm run bridge:write-simulator` | Local write simulator + audit chain drill (v7A.4) |
+| `npm run bridge:replay` | Replay observation packets through simulator (v7A.5) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -162,6 +163,7 @@ src/
       idempotency.ts           # Idempotency key + dedup tracking
       auditLog.ts              # Append-only audit log with hash chain
       localWriteSimulator.ts   # Local write simulator (v7A.4)
+      replayEngine.ts          # Packet replay engine (v7A.5)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -451,6 +453,73 @@ All output is local JSONL in `data/dry-run/` (gitignored).
 
 ---
 
+## v7A.5: Replay Existing Observation Packets Through the Local Write Simulator
+
+v7A.5 replays realistic observation packets through the v7A.4 local write simulator to prove deterministic accept/reject behavior, audit continuity across multi-packet replay, and boundary enforcement at scale.
+
+```
+Historical observation packets
+  → v7A.4 local write simulator
+  → deterministic accept / reject
+  → audit log entry (hash chain)
+  → continuity verification
+```
+
+### What the Replay Tests Cover (22 tests — authorized minimum: 15)
+
+**Historical packet replay (4 tests):**
+- Realistic observation packet → simulated success
+- Low-confidence packet with valid human review → accepted
+- Multi-packet replay: 3 valid packets → all success
+- Mixed decisions: accept + reject + defer sequence
+
+**Determinism (2 tests):**
+- Same packet replayed twice → same status
+- Unsafe packet replayed twice → rejected both times
+
+**Rejection coverage (5 tests):**
+- Missing human review → reject
+- Stale human review (>7 days) → reject
+- Wrong approval type (needs_revision) → reject
+- Malformed safety declarations → reject
+- Execution authority claim → reject with execution flag
+
+**Audit continuity (2 tests):**
+- Multi-packet replay (5 packets) → valid hash chain
+- Mixed success/rejection replay → audit chain valid
+
+**Tamper proof (1 test):**
+- Tampered audit log → verification fails
+
+**Idempotency across replay (2 tests):**
+- Same key + same payload → duplicate
+- Same key + altered payload → collision
+
+**Boundary enforcement (6 tests):**
+- No `fetch()` calls
+- No credential values
+- Multi-packet replay never creates governed state
+- Multi-packet replay never emits execution authority
+- Circuit breaker tracked across replay
+- Audit entry count equals replay count
+
+### Running the Replay
+
+```bash
+npm run bridge:replay
+```
+
+### What v7A.5 Does NOT Do
+
+- ❌ Make real network calls
+- ❌ Connect to Open Brain
+- ❌ Use credentials
+- ❌ Create governed state
+- ❌ Authorize execution
+- ❌ Authorize v7B
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -487,6 +556,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a2-review-packet` | v7A.2 Observation Review Packet + Human Promotion Gate |
 | `sfa-barbell-dashboard-v7a3-live-write-readiness` | v7A.3 Live Write Readiness Spec + Threat Model |
 | `sfa-barbell-dashboard-v7a4-local-write-simulator` | v7A.4 Local Write Simulator + Audit Chain Drill |
+| `sfa-barbell-dashboard-v7a5-replay-packets` | v7A.5 Replay Existing Observation Packets |
 
 ---
 
