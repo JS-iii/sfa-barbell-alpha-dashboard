@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A — Open Brain Observation Bridge (Dry-Run Contract)  
-**Prior Phase:** v6 — Server-side Snapshot Generator  
-**Earlier:** v5.1 — Contract Lock + Deployment Proof  
+**Current Phase:** v7A.1 — Bridge Safety Drill + Rejection Harness  
+**Prior Phase:** v7A — Open Brain Observation Bridge (Dry-Run Contract)  
+**Earlier:** v6 — Server-side Snapshot Generator · v5.1 — Contract Lock + Deployment Proof  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -124,6 +124,7 @@ npm run preview
 | `npm run check` | Runs both of the above |
 | `npm run generate:snapshot` | Fetches providers, scores assets, writes JSON artifact |
 | `npm run bridge:dry-run` | Transforms snapshot to observation draft (dry-run, no network) |
+| `npm run bridge:safety-drill` | 17-test safety harness (1 valid + 16 rejection cases) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -158,6 +159,7 @@ scripts/
   security-scan.mjs            # npm run scan:security
   generate-snapshot.mjs        # npm run generate:snapshot
   bridge-dry-run.mjs           # npm run bridge:dry-run
+  bridge-safety-drill.mjs      # npm run bridge:safety-drill
 ```
 
 ---
@@ -211,6 +213,44 @@ This loads the default mock snapshot, transforms it, validates the draft, and ap
 
 ---
 
+## v7A.1: Bridge Safety Drill + Rejection Harness
+
+v7A.1 proves the observation bridge correctly rejects malformed, unsafe, or authority-escalating drafts. It does not add any network, credential, or execution capability.
+
+### What the Safety Drill Tests
+
+17 inline fixtures (no external files):
+
+| # | Test | Expected |
+|---|------|----------|
+| 1 | Valid AlphaSnapshot → valid OpenBrainObservationDraft | **Pass** |
+| 2 | Missing provenance | **Reject** |
+| 3 | Inflated confidence | **Reject** |
+| 4 | Snapshot score changed during transform | **Reject** |
+| 5 | Provider status removed | **Reject** |
+| 6 | notExecutionAuthority = false | **Reject** |
+| 7 | containsTradeOrders = true | **Reject** |
+| 8 | containsExecutionInstructions = true | **Reject** |
+| 9 | containsWalletReferences = true | **Reject** |
+| 10 | containsCredentials = true | **Reject** |
+| 11 | isGovernedState = true | **Reject** |
+| 12 | requiresHumanReview = false | **Reject** |
+| 13 | networkWriteStatus ≠ dry-run-local-only | **Reject** |
+| 14 | Payload with execution language | **Reject** |
+| 15 | Payload with wallet language | **Reject** |
+| 16 | Payload with credential language | **Reject** |
+| 17 | Draft attempting governed state for agent reading | **Reject** |
+
+### Running the Safety Drill
+
+```bash
+npm run bridge:safety-drill
+```
+
+All 17 tests must pass. Any failure blocks v7B consideration.
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -242,7 +282,8 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v5.1-contract-lock` | v5.1 Contract Lock + Deployment Proof |
 | `sfa-barbell-dashboard-v6-snapshot-generator` | v6 Server-side Snapshot Generator + Hardening |
 | `sfa-barbell-dashboard-v7a-bridge-contract` | v7A Open Brain Observation Bridge Dry-Run Contract |
+| `sfa-barbell-dashboard-v7a1-bridge-safety-drill` | v7A.1 Bridge Safety Drill + Rejection Harness |
 
 ---
 
-*This is a manual research and governance dashboard. Not a trading bot.*
+*This is a m

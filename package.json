@@ -12,7 +12,8 @@
     "scan:security": "node scripts/security-scan.mjs",
     "check": "npm run validate:fixtures && npm run scan:security",
     "generate:snapshot": "tsx scripts/generate-snapshot.mjs",
-    "bridge:dry-run": "node scripts/bridge-dry-run.mjs"
+    "bridge:dry-run": "node scripts/bridge-dry-run.mjs",
+    "bridge:safety-drill": "node scripts/bridge-safety-drill.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
