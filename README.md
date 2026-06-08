@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.2 — Observation Review Packet + Human Promotion Gate  
-**Prior Phase:** v7A.1 — Bridge Safety Drill + Rejection Harness  
-**Earlier:** v7A — Open Brain Observation Bridge · v6 — Snapshot Generator · v5.1 — Contract Lock  
+**Current Phase:** v7A.3 — Live Write Readiness Spec + Threat Model  
+**Prior Phase:** v7A.2 — Observation Review Packet + Human Promotion Gate  
+**Earlier:** v7A.1 — Safety Drill · v7A — Bridge Contract · v6 · v5.1  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -156,6 +156,13 @@ src/
       generator.ts             # Draft → review packet
       validator.ts             # Decision validation (allowed/forbidden)
       ledger.ts                # Local decision ledger (JSONL)
+    v7b/
+      writeRequestSchema.ts    # Future v7B write request types (no client)
+docs/v7b/
+  v7b_live_write_readiness.md
+  open_brain_observation_write_contract.md
+  v7b_threat_model.md
+  v7b_operator_checklist.md
 public/data/
   mock-alpha-snapshot.json     # v5.1 validated mock baseline
   generated-alpha-snapshot.json # v6 provider-generated artifact
@@ -329,6 +336,57 @@ This loads the default mock snapshot, transforms it, generates a review packet, 
 
 ---
 
+## v7A.3: Live Write Readiness Spec + Threat Model
+
+v7A.3 is a **documentation-only** phase that specifies the security, operational, and architectural requirements for a hypothetical v7B live Open Brain observation write. It adds **no live write capability**, no network clients, and no credentials.
+
+### Deliverables
+
+| Document | Purpose |
+|----------|---------|
+| `docs/v7b/v7b_live_write_readiness.md` | Full spec: credentials, scope, idempotency, audit, rollback, rate limiting, least-privilege |
+| `docs/v7b/open_brain_observation_write_contract.md` | Write request/response contract with validation rules and error codes |
+| `docs/v7b/v7b_threat_model.md` | 10 threat scenarios with mitigations, blast radius analysis, defense-in-depth matrix |
+| `docs/v7b/v7b_operator_checklist.md` | Human operator checklist required before v7B authorization |
+| `src/bridge/v7b/writeRequestSchema.ts` | TypeScript types for future write request shape (types only, no network client) |
+
+### What v7A.3 Specifies
+
+- **Credential boundary**: Server-side env vars only, never bundled, 90-day rotation
+- **Write scope**: Observation drafts only; governed_state, execution, trade instructions are **forbidden**
+- **Idempotency**: UUID v4 keys with 24-hour server-side retention window
+- **Replay protection**: Timestamp window + idempotency key + payload hash binding
+- **Audit logging**: Every operation logged locally with integrity chain
+- **Human review dependency**: v7A.2 `accept_for_future_observation_write` decision is **mandatory**
+- **Kill switch**: `OPENBRAIN_WRITE_DISABLED=true` blocks all writes without code changes
+- **Circuit breaker**: Opens after 5 consecutive failures
+- **Rate limiting**: Max 288 writes/day, client-side token bucket
+- **Least-privilege**: API key has `observation:write` only
+
+### What v7A.3 Does NOT Add
+
+- ❌ No Open Brain client library
+- ❌ No Supabase client
+- ❌ No credential values
+- ❌ No network write code
+- ❌ No `fetch()` calls to Open Brain
+- ❌ No environment variable reads
+- ❌ No execution capability
+- ❌ No governed state creation
+
+### v7A.3 Explicit Statement
+
+```
+Open Brain connected:      false
+Network writes:            false
+Credentials present:       false
+Execution capability:      false
+v7B authorized:            false
+This phase adds:           documentation and types only
+```
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -363,6 +421,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a1-bridge-safety-drill` | v7A.1 Bridge Safety Drill + Rejection Harness |
 | `sfa-barbell-dashboard-v7a1-hygiene` | v7A.1 Hygiene: gitignore dry-run JSONL logs |
 | `sfa-barbell-dashboard-v7a2-review-packet` | v7A.2 Observation Review Packet + Human Promotion Gate |
+| `sfa-barbell-dashboard-v7a3-live-write-readiness` | v7A.3 Live Write Readiness Spec + Threat Model |
 
 ---
 
