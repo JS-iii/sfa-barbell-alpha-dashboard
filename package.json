@@ -13,7 +13,8 @@
     "check": "npm run validate:fixtures && npm run scan:security",
     "generate:snapshot": "tsx scripts/generate-snapshot.mjs",
     "bridge:dry-run": "node scripts/bridge-dry-run.mjs",
-    "bridge:safety-drill": "node scripts/bridge-safety-drill.mjs"
+    "bridge:safety-drill": "node scripts/bridge-safety-drill.mjs",
+    "bridge:review-packet": "node scripts/bridge-review-packet.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.1 — Bridge Safety Drill + Rejection Harness  
-**Prior Phase:** v7A — Open Brain Observation Bridge (Dry-Run Contract)  
-**Earlier:** v6 — Server-side Snapshot Generator · v5.1 — Contract Lock + Deployment Proof  
+**Current Phase:** v7A.2 — Observation Review Packet + Human Promotion Gate  
+**Prior Phase:** v7A.1 — Bridge Safety Drill + Rejection Harness  
+**Earlier:** v7A — Open Brain Observation Bridge · v6 — Snapshot Generator · v5.1 — Contract Lock  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -125,6 +125,7 @@ npm run preview
 | `npm run generate:snapshot` | Fetches providers, scores assets, writes JSON artifact |
 | `npm run bridge:dry-run` | Transforms snapshot to observation draft (dry-run, no network) |
 | `npm run bridge:safety-drill` | 17-test safety harness (1 valid + 16 rejection cases) |
+| `npm run bridge:review-packet` | Generate review packet + human promotion gate (v7A.2) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -150,6 +151,11 @@ src/
     types.ts                   # OpenBrainObservationDraft contract
     transformer.ts             # Snapshot → observation draft
     logger.ts                  # Local JSONL dry-run logger
+    review/
+      types.ts                 # ReviewPacket + DecisionLedger types
+      generator.ts             # Draft → review packet
+      validator.ts             # Decision validation (allowed/forbidden)
+      ledger.ts                # Local decision ledger (JSONL)
 public/data/
   mock-alpha-snapshot.json     # v5.1 validated mock baseline
   generated-alpha-snapshot.json # v6 provider-generated artifact
@@ -251,6 +257,78 @@ All 17 tests must pass. Any failure blocks v7B consideration.
 
 ---
 
+## v7A.2: Observation Review Packet + Human Promotion Gate
+
+v7A.2 introduces a human-reviewable packet and promotion gate between the observation draft and any future Open Brain write. It transforms validated observation drafts into structured review packets with risk flags, key findings, and a human decision workflow.
+
+```
+OpenBrainObservationDraft → ReviewPacket → Human Decision → Local Ledger
+```
+
+### What v7A.2 Does
+
+- Generates a **ReviewPacket** from any validated `OpenBrainObservationDraft`
+- Creates human-readable **summary** with signal, confidence, regime, asset count
+- Identifies **risk flags** (mock data warning, low confidence, provider degradation)
+- Enforces a **human promotion gate** with explicit allowed/forbidden decisions
+- Records decisions to a **local JSONL ledger** (gitignored, no network write)
+
+### Allowed Decisions
+
+| Decision | Meaning | v7B Eligible |
+|----------|---------|-------------|
+| `accept_for_future_observation_write` | Draft is sound, eligible for v7B write when authorized | ✅ Yes |
+| `reject` | Draft has issues, do not write | ❌ No |
+| `needs_revision` | Draft needs changes before reconsideration | ❌ No |
+| `defer` | Decision postponed, remain in dry-run state | ❌ No |
+
+### Forbidden Decisions (Blocked)
+
+These decisions are **rejected** and will not create a ledger entry:
+
+- `approved_for_execution`
+- `trade_ready`
+- `governed_state`
+- `live_write_ready`
+
+### Fail-Closed Safety
+
+- Unsafe drafts (execution authority, governed state, live-write status) **cannot create review packets**
+- Forbidden decisions are **rejected at validation time**
+- The decision ledger preserves safety declarations on every entry
+- Unknown/unrecognized decisions are rejected
+
+### Running the Review Packet
+
+```bash
+npm run bridge:review-packet
+```
+
+This loads the default mock snapshot, transforms it, generates a review packet, simulates all allowed/forbidden decisions, runs 17 embedded safety tests, and records example decisions to the local ledger.
+
+### Review Packet Output
+
+```
+✅ Packet generated: open-brain-review-packet-v7a2
+📊 Signal: defensive (76%)
+🚩 Risk flags: 2
+   🟡 [data_source] Snapshot is mock data
+   🔵 [governance] For observation review only
+✅ ALLOWED: "accept_for_future_observation_write"
+✅ BLOCKED: "approved_for_execution"
+✅ BLOCKED: "governed_state"
+```
+
+### What v7A.2 Does NOT Do
+
+- ❌ Create governed state
+- ❌ Authorize execution or trading
+- ❌ Write to Open Brain or any network service
+- ❌ Use credentials
+- ❌ Enable live network writes
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -283,6 +361,8 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v6-snapshot-generator` | v6 Server-side Snapshot Generator + Hardening |
 | `sfa-barbell-dashboard-v7a-bridge-contract` | v7A Open Brain Observation Bridge Dry-Run Contract |
 | `sfa-barbell-dashboard-v7a1-bridge-safety-drill` | v7A.1 Bridge Safety Drill + Rejection Harness |
+| `sfa-barbell-dashboard-v7a1-hygiene` | v7A.1 Hygiene: gitignore dry-run JSONL logs |
+| `sfa-barbell-dashboard-v7a2-review-packet` | v7A.2 Observation Review Packet + Human Promotion Gate |
 
 ---
 
