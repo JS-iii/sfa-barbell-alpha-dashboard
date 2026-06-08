@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.3 — Live Write Readiness Spec + Threat Model  
-**Prior Phase:** v7A.2 — Observation Review Packet + Human Promotion Gate  
-**Earlier:** v7A.1 — Safety Drill · v7A — Bridge Contract · v6 · v5.1  
+**Current Phase:** v7A.4 — Local Write Simulator + Audit Chain Drill  
+**Prior Phase:** v7A.3 — Live Write Readiness Spec + Threat Model  
+**Earlier:** v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -126,6 +126,7 @@ npm run preview
 | `npm run bridge:dry-run` | Transforms snapshot to observation draft (dry-run, no network) |
 | `npm run bridge:safety-drill` | 17-test safety harness (1 valid + 16 rejection cases) |
 | `npm run bridge:review-packet` | Generate review packet + human promotion gate (v7A.2) |
+| `npm run bridge:write-simulator` | Local write simulator + audit chain drill (v7A.4) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -158,6 +159,9 @@ src/
       ledger.ts                # Local decision ledger (JSONL)
     v7b/
       writeRequestSchema.ts    # Future v7B write request types (no client)
+      idempotency.ts           # Idempotency key + dedup tracking
+      auditLog.ts              # Append-only audit log with hash chain
+      localWriteSimulator.ts   # Local write simulator (v7A.4)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -387,6 +391,66 @@ This phase adds:           documentation and types only
 
 ---
 
+## v7A.4: Local Write Simulator + Audit Chain Drill
+
+v7A.4 implements the v7B readiness spec as a **local-only simulator**. It exercises idempotency, audit logging, kill switch behavior, circuit breaker logic, human review dependency, and scope enforcement — all without any network calls.
+
+```
+ReviewPacket (accepted)
+  → simulated write request
+  → idempotency key + payload hash
+  → local simulated server response
+  → audit log entry (hash chain)
+  → circuit breaker / kill switch state check
+```
+
+### What the Simulator Tests (21 tests — authorized minimum: 20; expanded to 21 after adding explicit boundary enforcement)
+
+**Write validation (13 tests):**
+- Valid accepted packet → simulated success
+- Missing human review → reject
+- Decision not `accept_for_future_observation_write` → reject
+- Forbidden decisions (`governed_state`) → reject
+- Safety declaration mismatch → reject
+- `notExecutionAuthority=false` → reject
+- `containsTradeOrders=true` → reject
+- `containsExecutionInstructions=true` → reject
+- `containsWalletReferences=true` → reject
+- `containsCredentials=true` → reject
+- Duplicate key + same payload → duplicate (idempotent)
+- Duplicate key + different payload → reject (collision)
+- Stale human review (>7 days) → reject
+
+**Kill switch & circuit breaker (4 tests):**
+- Kill switch active → all writes blocked
+- Circuit breaker opens after 5 consecutive failures
+- Audit log hash chain verifies (tamper detection)
+- Tampered audit log fails verification
+
+**Boundary enforcement (4 tests):**
+- Simulator never creates governed state
+- Simulator never emits execution authority
+- No `fetch()` calls in code
+- No credential values in code
+
+### Running the Simulator
+
+```bash
+npm run bridge:write-simulator
+```
+
+All output is local JSONL in `data/dry-run/` (gitignored).
+
+### What v7A.4 Does NOT Do
+
+- ❌ Make real network calls
+- ❌ Connect to Open Brain
+- ❌ Use credentials
+- ❌ Create governed state
+- ❌ Authorize execution
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -422,6 +486,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a1-hygiene` | v7A.1 Hygiene: gitignore dry-run JSONL logs |
 | `sfa-barbell-dashboard-v7a2-review-packet` | v7A.2 Observation Review Packet + Human Promotion Gate |
 | `sfa-barbell-dashboard-v7a3-live-write-readiness` | v7A.3 Live Write Readiness Spec + Threat Model |
+| `sfa-barbell-dashboard-v7a4-local-write-simulator` | v7A.4 Local Write Simulator + Audit Chain Drill |
 
 ---
 
