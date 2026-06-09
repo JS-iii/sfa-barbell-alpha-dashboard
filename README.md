@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7B.0.1 — Live Write Authorization Ceremony + Canary Plan  
-**Prior Phase:** v7B.0 — Live Write Adapter Contract + Kill-Switch Scaffold  
-**Earlier:** v7A.7 — Governance Rehearsal · v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Current Phase:** v7B.0.2 — Canary Release Candidate Packet + Final Live-Write Gate  
+**Prior Phase:** v7B.0.1 — Live Write Authorization Ceremony + Canary Plan  
+**Earlier:** v7B.0 · v7A.7 — Governance Rehearsal · v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B.1 — Open Brain Live Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -132,6 +132,7 @@ npm run preview
 | `npm run bridge:governance-rehearsal` | End-to-end governance rehearsal + v7B candidate lock (v7A.7) |
 | `npm run bridge:live-write-adapter` | Live write adapter contract + kill-switch scaffold (v7B.0) |
 | `npm run bridge:canary-plan` | Authorization ceremony + canary plan (v7B.0.1) |
+| `npm run bridge:canary-rc` | Canary RC packet + final live-write gate (v7B.0.2) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -180,6 +181,10 @@ src/
       canaryValidator.ts       # Canary payload validator (v7B.0.1)
       firstWriteAuditContract.ts # Audit event contract (v7B.0.1)
       operatorApprovalChecklist.ts # Operator approval checklist (v7B.0.1)
+      canaryRCPacket.ts        # Canary release-candidate packet (v7B.0.2)
+      finalLiveWriteGate.ts    # Final live-write gate (v7B.0.2)
+      v7b1AuthorizationRecord.ts # v7B.1 auth record shape (v7B.0.2)
+      preflightReport.ts       # Final preflight report (v7B.0.2)
 docs/v7b/
   ...
   v7b01_authorization_ceremony.md  # Authorization ceremony (v7B.0.1)
@@ -870,6 +875,102 @@ npm run bridge:canary-plan
 
 ---
 
+## v7B.0.2: Canary Release Candidate Packet + Final Live-Write Gate
+
+v7B.0.2 is the **final pre-live-write staging** phase. It creates the exact immutable canary release-candidate packet and final live-write gate that would be used for v7B.1, while proving the packet cannot execute in v7B.0.2.
+
+### Deliverables
+
+| Module | Purpose |
+|--------|---------|
+| `canaryRCPacket.ts` | Immutable canary RC packet with deterministic SHA-256 hash |
+| `finalLiveWriteGate.ts` | 8-layer gate that always returns blocked |
+| `v7b1AuthorizationRecord.ts` | Auth record shape, hardcoded unauthorized |
+| `preflightReport.ts` | Final safety invariant report (10 invariants) |
+
+### 8-Layer Final Live-Write Gate
+
+```
+Canary RC Packet
+  → Layer 1: Kill Switch (fail-closed)
+  → Layer 2: v7B.1 Authorization (false)
+  → Layer 3: Credential Preflight (absent)
+  → Layer 4: Governed State Guard (blocked)
+  → Layer 5: Network Write Guard (blocked)
+  → Layer 6: Packet Hash Integrity (verified)
+  → Layer 7: Operator Signoff (missing)
+  → Layer 8: Packet Freshness (verified)
+  → BLOCKED — reason reported
+```
+
+### What the Tests Cover (34 tests — authorized minimum: 20)
+
+**Canary RC packet (8 tests):**
+- Valid packet generated with correct schema
+- Hash is 64-char hex (SHA-256)
+- Hash verification passes for untampered packet
+- Tampered packet fails hash verification
+- Fresh packet not stale
+- Packet without operator signoff detected
+- All safety invariants false
+
+**Final live-write gate (6 tests):**
+- Always returns allowed=false
+- Returns blockedBy for any packet
+- Has exactly 8 layers
+- Hash integrity layer passes for valid packet
+- Operator signoff layer fails (not signed)
+- Freshness layer passes
+
+**v7B.1 authorization (3 tests):**
+- Auth record is unauthorized
+- cannotActivateV7B1 is false
+- All prerequisites true still unauthorized
+
+**Cross-phase boundary (3 tests):**
+- v7A.7 candidate lock cannot activate v7B.1
+- v7B.0.1 ceremony cannot activate v7B.1
+- v7B.0.2 final gate cannot activate v7B.1
+
+**Preflight report (4 tests):**
+- Report generated with 10 invariants
+- All invariants satisfied
+- v7B.1 authorization false in report
+- 14 phases sealed
+
+**Credential & kill switch (3 tests):**
+- Credentials absent
+- Kill switch fail-closed
+- Credentials would be rejected
+
+**Safety invariants (3 tests):**
+- Governed state creation blocked
+- Network write blocked
+- Audit event blocked/planned only
+
+**Boundary enforcement (4 tests):**
+- No fetch() calls
+- No credential values
+- No executable live write path
+- Correct schema version
+
+### Running the Canary RC
+
+```bash
+npm run bridge:canary-rc
+```
+
+### What v7B.0.2 Does NOT Do
+
+- ❌ Execute canary writes
+- ❌ Authorize v7B.1
+- ❌ Stage credentials
+- ❌ Connect to Open Brain
+- ❌ Enable live write adapter
+- ❌ Create governed state
+
+---
+
 ## v7B.1 Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -911,6 +1012,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a7-governance-rehearsal` | v7A.7 End-to-End Governance Rehearsal + v7B Candidate Lock |
 | `sfa-barbell-dashboard-v7b0-live-write-adapter` | v7B.0 Live Write Adapter Contract + Kill-Switch Scaffold |
 | `sfa-barbell-dashboard-v7b01-canary-plan` | v7B.0.1 Live Write Authorization Ceremony + Canary Plan |
+| `sfa-barbell-dashboard-v7b02-canary-rc` | v7B.0.2 Canary Release Candidate + Final Live-Write Gate |
 
 ---
 
