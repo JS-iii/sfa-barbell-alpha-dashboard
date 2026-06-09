@@ -16,7 +16,8 @@
     "bridge:safety-drill": "node scripts/bridge-safety-drill.mjs",
     "bridge:review-packet": "node scripts/bridge-review-packet.mjs",
     "bridge:write-simulator": "node scripts/bridge-write-simulator.mjs",
-    "bridge:replay": "node scripts/bridge-replay.mjs"
+    "bridge:replay": "node scripts/bridge-replay.mjs",
+    "bridge:replay-dossier": "node scripts/bridge-replay-dossier.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

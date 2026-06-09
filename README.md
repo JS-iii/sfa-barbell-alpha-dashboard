@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.5 — Replay Existing Observation Packets  
-**Prior Phase:** v7A.4 — Local Write Simulator + Audit Chain Drill  
-**Earlier:** v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Current Phase:** v7A.6 — Replay Promotion Dossier + Governance Preflight  
+**Prior Phase:** v7A.5 — Replay Existing Observation Packets  
+**Earlier:** v7A.4 — Write Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -128,6 +128,7 @@ npm run preview
 | `npm run bridge:review-packet` | Generate review packet + human promotion gate (v7A.2) |
 | `npm run bridge:write-simulator` | Local write simulator + audit chain drill (v7A.4) |
 | `npm run bridge:replay` | Replay observation packets through simulator (v7A.5) |
+| `npm run bridge:replay-dossier` | Generate promotion dossier + governance preflight (v7A.6) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -164,6 +165,7 @@ src/
       auditLog.ts              # Append-only audit log with hash chain
       localWriteSimulator.ts   # Local write simulator (v7A.4)
       replayEngine.ts          # Packet replay engine (v7A.5)
+      replayDossier.ts         # Promotion dossier generator (v7A.6)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -520,6 +522,80 @@ npm run bridge:replay
 
 ---
 
+## v7A.6: Replay Promotion Dossier + Governance Preflight
+
+v7A.6 converts replayed observation packets into human-reviewable **promotion dossiers** — the final checkpoint before any v7B consideration. It aggregates replay results, audit chain status, determinism verification, and boundary checks into a single operator-reviewable document.
+
+```
+Replayed packet
+  → promotion dossier
+  → state: promotion_candidate | rejected | blocked | needs_review | replay_verified
+  → operator decision placeholder
+  → v7B promotion eligibility check
+```
+
+### Dossier States
+
+| State | Meaning | Can Promote to v7B? |
+|-------|---------|-------------------|
+| `promotion_candidate` | All checks passed, ready for operator review | ✅ Yes (with operator approval) |
+| `rejected` | Replay failed validation | ❌ No |
+| `blocked_boundary_violation` | Safety/governance boundary would be violated | ❌ No |
+| `needs_operator_review` | Ambiguous result (bad audit chain, non-deterministic) | ❌ No (pending review) |
+| `replay_verified` | Duplicate replay, already processed | ❌ No (no action needed) |
+
+### What the Dossier Tests Cover (24 tests — authorized minimum: 15)
+
+**State determination (8 tests):**
+- Valid success → `promotion_candidate`
+- Rejected (safety violation) → `rejected`
+- Governed state would be created → `blocked_boundary_violation`
+- Kill switch blocked → `blocked_boundary_violation`
+- Invalid audit chain → `needs_operator_review`
+- Non-deterministic → `needs_operator_review`
+- Duplicate → `replay_verified`
+- Unknown status → `needs_operator_review` (fail-closed)
+
+**Decision validation (4 tests):**
+- `promote_to_v7b_candidate` allowed for promotion_candidate
+- `auto_promote` → rejected (forbidden)
+- `create_governed_state` → rejected (forbidden)
+- `promote_to_v7b_candidate` disallowed for rejected dossier
+
+**Promotion eligibility (3 tests):**
+- promotion_candidate → can promote
+- rejected → cannot promote
+- blocked → cannot promote
+
+**Field & safety (5 tests):**
+- Packet hash present (SHA-256)
+- Idempotency key preserved
+- notExecutionAuthority=true
+- humanReviewRequired=true
+- noCredentialsPresent + noNetworkCallsMade
+
+**Boundary enforcement (4 tests):**
+- No `fetch()` calls
+- No credential values
+- Correct schema version
+- Deterministic packet hashing
+
+### Running the Dossier Generator
+
+```bash
+npm run bridge:replay-dossier
+```
+
+### What v7A.6 Does NOT Do
+
+- ❌ Create governed state
+- ❌ Authorize v7B
+- ❌ Make network calls
+- ❌ Use credentials
+- ❌ Authorize execution
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -557,6 +633,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a3-live-write-readiness` | v7A.3 Live Write Readiness Spec + Threat Model |
 | `sfa-barbell-dashboard-v7a4-local-write-simulator` | v7A.4 Local Write Simulator + Audit Chain Drill |
 | `sfa-barbell-dashboard-v7a5-replay-packets` | v7A.5 Replay Existing Observation Packets |
+| `sfa-barbell-dashboard-v7a6-replay-dossier` | v7A.6 Replay Promotion Dossier + Governance Preflight |
 
 ---
 
