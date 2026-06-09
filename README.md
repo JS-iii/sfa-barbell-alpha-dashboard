@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.6 — Replay Promotion Dossier + Governance Preflight  
-**Prior Phase:** v7A.5 — Replay Existing Observation Packets  
-**Earlier:** v7A.4 — Write Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Current Phase:** v7A.7 — End-to-End Governance Rehearsal + v7B Candidate Lock  
+**Prior Phase:** v7A.6 — Replay Promotion Dossier + Governance Preflight  
+**Earlier:** v7A.5 — Replay · v7A.4 — Write Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -129,6 +129,7 @@ npm run preview
 | `npm run bridge:write-simulator` | Local write simulator + audit chain drill (v7A.4) |
 | `npm run bridge:replay` | Replay observation packets through simulator (v7A.5) |
 | `npm run bridge:replay-dossier` | Generate promotion dossier + governance preflight (v7A.6) |
+| `npm run bridge:governance-rehearsal` | End-to-end governance rehearsal + v7B candidate lock (v7A.7) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -166,6 +167,8 @@ src/
       localWriteSimulator.ts   # Local write simulator (v7A.4)
       replayEngine.ts          # Packet replay engine (v7A.5)
       replayDossier.ts         # Promotion dossier generator (v7A.6)
+      governanceRehearsal.ts   # End-to-end governance rehearsal (v7A.7)
+      v7bCandidateLock.ts      # v7B candidate lock (v7A.7)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -596,6 +599,91 @@ npm run bridge:replay-dossier
 
 ---
 
+## v7A.7: End-to-End Governance Rehearsal + v7B Candidate Lock
+
+v7A.7 is the final governance phase before v7B consideration. It proves the full offline governance path from observation packet to v7B candidate lock:
+
+```
+Observation Packet
+  → Local Write Simulator (v7A.4)
+  → Replay Verification (v7A.5)
+  → Promotion Dossier (v7A.6)
+  → Operator Decision
+  → v7B Candidate Lock (review-only, non-executable)
+  → EXPLICIT BLOCK: v7B cannot be activated
+```
+
+### What the Rehearsal Tests Cover (21 tests — authorized minimum: 15)
+
+**End-to-end happy path (3 tests):**
+- Full E2E: packet → simulator → replay → dossier → candidate lock
+- E2E with reject → `candidate_rejected`
+- E2E with defer → `v7b_not_authorized`
+
+**Blocked states (5 tests):**
+- Boundary violation → blocked at `boundary_check`
+- Determinism failure → blocked at `determinism` step
+- Audit chain failure → blocked at `audit_chain` step
+- Forbidden decision (`auto_promote`) → blocked at `decision_validation`
+- Safety violation in packet → blocked at `boundary_check`
+
+**v7B activation block (3 tests):**
+- v7B **cannot** be activated from candidate lock (always false)
+- `v7bAuthorization.authorized` is **ALWAYS false**
+- Unlock requirements documented and enforced
+
+**Candidate lock properties (4 tests):**
+- Correct schema version
+- Packet hash preserved from dossier
+- Not expired at creation
+- 90-day expiration set
+
+**Step-by-step verification (3 tests):**
+- All 7 steps completed on happy path
+- Packet creation always succeeds
+- Simulator step always runs
+
+**Boundary enforcement (3 tests):**
+- No `fetch()` calls
+- No credential values
+- No governed state created by any path
+
+### v7B Candidate Lock
+
+The candidate lock is a **review-only, non-executable** governance object that:
+- Records the dossier reference and operator decision
+- Explicitly states `v7bAuthorization.authorized: false`
+- Has `v7bActivationBlocked: true` (hardcoded safety flag)
+- Documents unlock requirements (operator auth, credentials, security review, checklist)
+- Expires after 90 days
+
+**The lock CANNOT activate v7B.** Separate explicit authorization is required.
+
+### Fixture Timestamp Documentation
+
+Synthetic degradation fixtures (`provider-degraded-coingecko.json`,
+`provider-all-degraded.json`) have timestamps that may be refreshed when they
+age past 24h. This is documented in `public/data/fixtures/README.md`.
+The `stale-snapshot.json` fixture is intentionally stale and must never be
+refreshed.
+
+### Running the Rehearsal
+
+```bash
+npm run bridge:governance-rehearsal
+```
+
+### What v7A.7 Does NOT Do
+
+- ❌ Activate v7B (explicitly blocked)
+- ❌ Create governed state
+- ❌ Make network calls
+- ❌ Use credentials
+- ❌ Authorize execution
+- ❌ Authorize live writes
+
+---
+
 ## v7B Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -634,6 +722,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a4-local-write-simulator` | v7A.4 Local Write Simulator + Audit Chain Drill |
 | `sfa-barbell-dashboard-v7a5-replay-packets` | v7A.5 Replay Existing Observation Packets |
 | `sfa-barbell-dashboard-v7a6-replay-dossier` | v7A.6 Replay Promotion Dossier + Governance Preflight |
+| `sfa-barbell-dashboard-v7a7-governance-rehearsal` | v7A.7 End-to-End Governance Rehearsal + v7B Candidate Lock |
 
 ---
 
