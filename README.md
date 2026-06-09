@@ -1,9 +1,9 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7A.7 — End-to-End Governance Rehearsal + v7B Candidate Lock  
-**Prior Phase:** v7A.6 — Replay Promotion Dossier + Governance Preflight  
-**Earlier:** v7A.5 — Replay · v7A.4 — Write Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
-**Next Phase:** v7B — Open Brain Network Write (NOT YET AUTHORIZED)
+**Current Phase:** v7B.0 — Live Write Adapter Contract + Kill-Switch Scaffold  
+**Prior Phase:** v7A.7 — End-to-End Governance Rehearsal + v7B Candidate Lock  
+**Earlier:** v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Next Phase:** v7B.1 — Open Brain Live Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
 **Open Brain Connected:** `false`  
@@ -130,6 +130,7 @@ npm run preview
 | `npm run bridge:replay` | Replay observation packets through simulator (v7A.5) |
 | `npm run bridge:replay-dossier` | Generate promotion dossier + governance preflight (v7A.6) |
 | `npm run bridge:governance-rehearsal` | End-to-end governance rehearsal + v7B candidate lock (v7A.7) |
+| `npm run bridge:live-write-adapter` | Live write adapter contract + kill-switch scaffold (v7B.0) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -169,6 +170,12 @@ src/
       replayDossier.ts         # Promotion dossier generator (v7A.6)
       governanceRehearsal.ts   # End-to-end governance rehearsal (v7A.7)
       v7bCandidateLock.ts      # v7B candidate lock (v7A.7)
+      liveWriteAdapter.ts      # Live write adapter interface + disabled impl (v7B.0)
+      killSwitch.ts            # Kill-switch scaffold (v7B.0)
+      authorizationGate.ts     # Operator authorization gate (v7B.0)
+      credentialPreflight.ts   # Credential absence checker (v7B.0)
+      networkWriteGuard.ts     # Outbound write blocker (v7B.0)
+      governedStateGuard.ts    # State creation blocker (v7B.0)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -684,7 +691,104 @@ npm run bridge:governance-rehearsal
 
 ---
 
-## v7B Future Scope (NOT YET AUTHORIZED)
+## v7B.0: Live Write Adapter Contract + Kill-Switch Scaffold
+
+v7B.0 is the first v7B phase. It introduces the **live-write adapter surface** as a disabled, credentialless, non-networked contract layer. This phase defines the interface but keeps all writes blocked.
+
+### Architecture: 6 Guard Layers
+
+Every attempted write passes through these layers (all blocking in v7B.0):
+
+```
+Write Request
+  → Layer 1: Kill Switch (default: disabled)
+  → Layer 2: Authorization Gate (authorized: false)
+  → Layer 3: Credential Preflight (credentials: absent)
+  → Layer 4: Governed State Guard (creation: blocked)
+  → Layer 5: Network Write Guard (outbound: blocked)
+  → Layer 6: Disabled Adapter (always returns ADAPTER_DISABLED)
+  → BLOCKED — audit event recorded
+```
+
+### Modules
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Live Write Adapter | `liveWriteAdapter.ts` | Interface contract + `DisabledLiveWriteAdapter` that always fails closed |
+| Kill Switch | `killSwitch.ts` | `OPENBRAIN_WRITE_DISABLED` env var check, default blocked |
+| Authorization Gate | `authorizationGate.ts` | Hardcoded `authorized: false`, requires future operator approval |
+| Credential Preflight | `credentialPreflight.ts` | Scans env vars for credentials, expects clean in v7B.0 |
+| Network Write Guard | `networkWriteGuard.ts` | Blocks all outbound network write attempts |
+| Governed State Guard | `governedStateGuard.ts` | Pattern-matches payload for governed state creation attempts |
+
+### What the Tests Cover (33 tests — authorized minimum: 20)
+
+**Disabled adapter (4 tests):**
+- `isEnabled` is false
+- `write()` returns `ADAPTER_DISABLED`
+- `isReady()` returns false
+- Status shows all guards blocking
+
+**Kill switch (4 tests):**
+- Default blocks writes
+- `OPENBRAIN_WRITE_DISABLED=true` blocks
+- `OPENBRAIN_WRITE_DISABLED=false` still blocks (v7B.0)
+- Unset env blocks
+
+**Authorization gate (3 tests):**
+- `authorized` is false by default
+- All authorization fields are null
+- Reason mentions v7B.0 scaffold
+
+**Credential preflight (3 tests):**
+- Passes with no env vars (clean)
+- Detects `OPENBRAIN_API_KEY`
+- Detects multiple credentials
+
+**Network write guard (2 tests):**
+- Blocks all writes
+- Reason mentions v7B.0
+
+**Governed state guard (4 tests):**
+- `governed_state: true` blocked
+- Normal payload passes
+- `isGovernedState: true` in safety blocked
+- `isGovernedState: false` passes
+
+**Integration (3 tests):**
+- `attemptLiveWrite` blocked by kill switch (first layer)
+- Blocked write produces audit event
+- Governed state payload detected by direct guard check
+
+**v7A.7 → v7B.0 boundary (2 tests):**
+- Candidate lock cannot activate v7B.0 adapter
+- All guard layers must pass — v7B.0 blocks at first layer
+
+**Boundary enforcement (4 tests):**
+- No `fetch()` calls
+- No credential values
+- No Open Brain connection
+- Adapter write returns `ADAPTER_DISABLED` (duplicate coverage for emphasis)
+
+### Running the Adapter Test
+
+```bash
+npm run bridge:live-write-adapter
+```
+
+### What v7B.0 Does NOT Do
+
+- ❌ Connect to Open Brain
+- ❌ Perform network writes
+- ❌ Use credentials
+- ❌ Create governed state
+- ❌ Authorize execution
+- ❌ Enable live writes (adapter is disabled)
+- ❌ Allow v7B activation (authorization gate blocks)
+
+---
+
+## v7B.1 Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
 
@@ -723,6 +827,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a5-replay-packets` | v7A.5 Replay Existing Observation Packets |
 | `sfa-barbell-dashboard-v7a6-replay-dossier` | v7A.6 Replay Promotion Dossier + Governance Preflight |
 | `sfa-barbell-dashboard-v7a7-governance-rehearsal` | v7A.7 End-to-End Governance Rehearsal + v7B Candidate Lock |
+| `sfa-barbell-dashboard-v7b0-live-write-adapter` | v7B.0 Live Write Adapter Contract + Kill-Switch Scaffold |
 
 ---
 

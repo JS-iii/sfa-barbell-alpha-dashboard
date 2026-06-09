@@ -18,7 +18,8 @@
     "bridge:write-simulator": "node scripts/bridge-write-simulator.mjs",
     "bridge:replay": "node scripts/bridge-replay.mjs",
     "bridge:replay-dossier": "node scripts/bridge-replay-dossier.mjs",
-    "bridge:governance-rehearsal": "node scripts/bridge-governance-rehearsal.mjs"
+    "bridge:governance-rehearsal": "node scripts/bridge-governance-rehearsal.mjs",
+    "bridge:live-write-adapter": "node scripts/bridge-live-write-adapter.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
