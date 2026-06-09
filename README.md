@@ -1,9 +1,9 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7B.0.2 — Canary Release Candidate Packet + Final Live-Write Gate  
-**Prior Phase:** v7B.0.1 — Live Write Authorization Ceremony + Canary Plan  
-**Earlier:** v7B.0 · v7A.7 — Governance Rehearsal · v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
-**Next Phase:** v7B.1 — Open Brain Live Write (NOT YET AUTHORIZED)
+**Current Phase:** v7B.1 — Open Brain Canary Write + Immediate Lockdown  
+**Prior Phase:** v7B.0.2 — Canary Release Candidate Packet + Final Live-Write Gate  
+**Earlier:** v7B.0.1 · v7B.0 · v7A.7 — Governance Rehearsal · v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Next Phase:** v7B.2 — Open Brain Post-Canary Lockdown Review (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
 **Open Brain Connected:** `false`  
@@ -133,6 +133,7 @@ npm run preview
 | `npm run bridge:live-write-adapter` | Live write adapter contract + kill-switch scaffold (v7B.0) |
 | `npm run bridge:canary-plan` | Authorization ceremony + canary plan (v7B.0.1) |
 | `npm run bridge:canary-rc` | Canary RC packet + final live-write gate (v7B.0.2) |
+| `npm run bridge:open-brain-canary` | Open Brain canary write adapter + immediate lockdown (v7B.1) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -185,6 +186,7 @@ src/
       finalLiveWriteGate.ts    # Final live-write gate (v7B.0.2)
       v7b1AuthorizationRecord.ts # v7B.1 auth record shape (v7B.0.2)
       preflightReport.ts       # Final preflight report (v7B.0.2)
+      openBrainCanaryAdapter.ts # Open Brain canary write adapter (v7B.1) — ONLY fetch() in codebase
 docs/v7b/
   ...
   v7b01_authorization_ceremony.md  # Authorization ceremony (v7B.0.1)
@@ -205,6 +207,7 @@ scripts/
   generate-snapshot.mjs        # npm run generate:snapshot
   bridge-dry-run.mjs           # npm run bridge:dry-run
   bridge-safety-drill.mjs      # npm run bridge:safety-drill
+  bridge-open-brain-canary.mjs # npm run bridge:open-brain-canary
 ```
 
 ---
@@ -971,17 +974,117 @@ npm run bridge:canary-rc
 
 ---
 
-## v7B.1 Future Scope (NOT YET AUTHORIZED)
+## v7B.1: Open Brain Canary Write + Immediate Lockdown
 
-v7B would introduce live Open Brain observation writes:
+v7B.1 is the **first and only** phase where `fetch()` exists in the codebase. It introduces the `openBrainCanaryAdapter.ts` module which can execute exactly ONE canary write to Open Brain, then permanently locks itself.
+
+### Architecture: Single-Write + Auto-Lock
 
 ```
-validated AlphaSnapshot → private server-side bridge → Open Brain observation write → human review → governed state promotion
+Canary RC Packet
+  → 10-Point Preflight (kill switch, hash, freshness, auth, credentials, governed state, execution authority)
+  → ONE fetch() POST to Open Brain endpoint
+  → IMMEDIATE permanent lock (regardless of success/failure/network error)
+  → Audit event captured
+  → Adapter permanently unusable
 ```
 
-**v7B has not been authorized.** No live network write capability exists. No Open Brain credentials are present in this repository. No Supabase client. No service role key.
+### 10-Point Preflight Checklist
 
-v7B would require:
+| # | Check | Blocks If |
+|---|-------|-----------|
+| 1 | Kill switch | `OPENBRAIN_WRITE_DISABLED` is unset, empty, or `"true"` |
+| 2 | Packet hash integrity | SHA-256 hash does not match recomputed hash |
+| 3 | Packet freshness | Packet generated >24h ago |
+| 4 | v7B.1 authorization | `V7B1_CANARY_AUTHORIZED` is not `"true"` |
+| 5 | Credentials staged | `OPENBRAIN_API_KEY` or `OPENBRAIN_ENDPOINT_URL` not set |
+| 6 | Governed state guard | `isGovernedState !== false` |
+| 7 | Execution authority | `notExecutionAuthority !== true` |
+| 8 | Permanent lock | Adapter already permanently locked |
+
+### Single-Write Lock Semantics
+
+- `writeAttempted` is set **immediately** on function entry
+- `permanentlyLocked` is set before **any** return path (success, server error, network error, preflight failure)
+- After the first call to `executeCanaryWrite()`, the adapter can never be used again
+- `resetAdapterState()` exists for **testing only** (CLI harness)
+
+### Canary Write Adapter Module
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Canary Write Adapter | `openBrainCanaryAdapter.ts` | **Only module with `fetch()`**. Single-write, auto-lock, env-var credentials. |
+| Credential Preflight | `checkStagedCredentials()` | Reads `OPENBRAIN_API_KEY`, `OPENBRAIN_ENDPOINT_URL` from env vars only |
+| Preflight | `runCanaryPreflight()` | 10-point fail-closed preflight |
+| Write Execution | `executeCanaryWrite()` | Single write attempt with immediate lock |
+| Audit Event | `CanaryAuditEvent` | Every attempt produces an audit event |
+
+### CLI Test Harness: 38 Tests
+
+```bash
+npm run bridge:open-brain-canary
+```
+
+| Section | Tests | Coverage |
+|---------|-------|----------|
+| Canary Preflight | 8 | Kill switch, v7b1 auth, credentials, hash integrity, freshness, governed state, execution authority |
+| Single-Write Enforcement | 5 | Fresh adapter, writeAttempted, second attempt blocked, fetch called once |
+| Write Execution Path | 3 | Success (200), server error (500), network error |
+| Payload Validation | 3 | Hash integrity, schema version, trade order safety |
+| Audit Event | 3 | Success audit, blocked audit, failure audit |
+| Post-Canary Lockdown | 6 | Permanently locked after success/error/failure/preflight-failure, canAttemptWrite=false, isAdapterLocked=true |
+| Credential Safety | 4 | Missing key, missing URL, both present, projectId optional |
+| Boundary Enforcement | 6 | No direct fetch in script, no credential values, no wallet patterns, no execution patterns, adapter uses fetchImpl only |
+
+### Environment Variables (Required for Live Write)
+
+| Variable | Purpose | Set By |
+|----------|---------|--------|
+| `OPENBRAIN_API_KEY` | API key for Open Brain endpoint | Operator (env var only, never in code) |
+| `OPENBRAIN_ENDPOINT_URL` | Open Brain write endpoint URL | Operator (env var only, never in code) |
+| `OPENBRAIN_PROJECT_ID` | Optional project ID header | Operator (env var only, never in code) |
+| `V7B1_CANARY_AUTHORIZED` | Explicit operator authorization flag | Operator (must be `"true"`) |
+| `OPENBRAIN_WRITE_DISABLED` | Kill switch | Operator (unset/empty/`"true"` = blocked) |
+
+### What v7B.1 Does NOT Do
+
+- ❌ **Does NOT execute canary writes in this test script** (mock fetch only)
+- ❌ Does NOT stage credentials in code (env vars only)
+- ❌ Does NOT allow a second write (single-use adapter)
+- ❌ Does NOT create governed state
+- ❌ Does NOT authorize execution
+- ❌ Does NOT leave the adapter unlocked after use (auto-lock)
+- ❌ Does NOT proceed to v7B.2 without operator authorization
+
+### Post-Canary State
+
+After any canary write attempt (success or failure):
+
+```
+writeAttempted:           true
+permanentlyLocked:        true
+canAttemptWrite():        false
+isAdapterLocked():        true
+```
+
+---
+
+## v7B.2 Future Scope (NOT YET AUTHORIZED)
+
+v7B.2 would introduce post-canary lockdown review:
+
+```
+Canary write attempt
+  → Read-after-write verification (if Open Brain supports it)
+  → Audit chain verification
+  → Post-canary status report
+  → Return to guarded state
+  → EXPLICIT BLOCK: v7B.2 NOT AUTHORIZED
+```
+
+**v7B.2 has not been authorized.** No post-canary review capability exists beyond the immediate lockdown.
+
+v7B.2 would require:
 - Server-side-only Open Brain credentials (env var, never bundled)
 - Write scope limited to observation drafts (not governed state)
 - Dry-run parity: v7A output must match v7B write format exactly
@@ -1013,6 +1116,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7b0-live-write-adapter` | v7B.0 Live Write Adapter Contract + Kill-Switch Scaffold |
 | `sfa-barbell-dashboard-v7b01-canary-plan` | v7B.0.1 Live Write Authorization Ceremony + Canary Plan |
 | `sfa-barbell-dashboard-v7b02-canary-rc` | v7B.0.2 Canary Release Candidate + Final Live-Write Gate |
+| `sfa-barbell-dashboard-v7b1-canary-write` | v7B.1 Open Brain Canary Write + Immediate Lockdown |
 
 ---
 

@@ -21,7 +21,8 @@
     "bridge:governance-rehearsal": "node scripts/bridge-governance-rehearsal.mjs",
     "bridge:live-write-adapter": "node scripts/bridge-live-write-adapter.mjs",
     "bridge:canary-plan": "node scripts/bridge-canary-plan.mjs",
-    "bridge:canary-rc": "node scripts/bridge-canary-rc.mjs"
+    "bridge:canary-rc": "node scripts/bridge-canary-rc.mjs",
+    "bridge:open-brain-canary": "node scripts/bridge-open-brain-canary.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
