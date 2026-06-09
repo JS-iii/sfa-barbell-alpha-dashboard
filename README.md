@@ -1,8 +1,8 @@
 # SFA Barbell Alpha Dashboard
 
-**Current Phase:** v7B.0 — Live Write Adapter Contract + Kill-Switch Scaffold  
-**Prior Phase:** v7A.7 — End-to-End Governance Rehearsal + v7B Candidate Lock  
-**Earlier:** v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
+**Current Phase:** v7B.0.1 — Live Write Authorization Ceremony + Canary Plan  
+**Prior Phase:** v7B.0 — Live Write Adapter Contract + Kill-Switch Scaffold  
+**Earlier:** v7A.7 — Governance Rehearsal · v7A.6 — Dossier · v7A.5 — Replay · v7A.4 — Simulator · v7A.3 — Readiness Spec · v7A.2 — Review Packet · v7A.1 — Safety Drill · v7A · v6 · v5.1  
 **Next Phase:** v7B.1 — Open Brain Live Write (NOT YET AUTHORIZED)
 
 **Compliance Mode:** `telemetry_and_simulation_only_no_execution`  
@@ -131,6 +131,7 @@ npm run preview
 | `npm run bridge:replay-dossier` | Generate promotion dossier + governance preflight (v7A.6) |
 | `npm run bridge:governance-rehearsal` | End-to-end governance rehearsal + v7B candidate lock (v7A.7) |
 | `npm run bridge:live-write-adapter` | Live write adapter contract + kill-switch scaffold (v7B.0) |
+| `npm run bridge:canary-plan` | Authorization ceremony + canary plan (v7B.0.1) |
 | `npm run build` | TypeScript compile + Vite production build |
 
 ---
@@ -176,6 +177,14 @@ src/
       credentialPreflight.ts   # Credential absence checker (v7B.0)
       networkWriteGuard.ts     # Outbound write blocker (v7B.0)
       governedStateGuard.ts    # State creation blocker (v7B.0)
+      canaryValidator.ts       # Canary payload validator (v7B.0.1)
+      firstWriteAuditContract.ts # Audit event contract (v7B.0.1)
+      operatorApprovalChecklist.ts # Operator approval checklist (v7B.0.1)
+docs/v7b/
+  ...
+  v7b01_authorization_ceremony.md  # Authorization ceremony (v7B.0.1)
+  v7b01_canary_write_contract.md   # Canary payload contract (v7B.0.1)
+  v7b01_rollback_checklist.md      # Rollback checklist (v7B.0.1)
 docs/v7b/
   v7b_live_write_readiness.md
   open_brain_observation_write_contract.md
@@ -788,6 +797,79 @@ npm run bridge:live-write-adapter
 
 ---
 
+## v7B.0.1: Live Write Authorization Ceremony + Canary Plan
+
+v7B.0.1 is the **planning/preflight** phase before any canary write. It defines the operator authorization ceremony, canary payload contract, rollback checklist, and first-write audit expectations while keeping all writes disabled.
+
+### Deliverables
+
+| Document/File | Purpose |
+|---------------|---------|
+| `docs/v7b/v7b01_authorization_ceremony.md` | Step-by-step operator authorization ceremony |
+| `docs/v7b/v7b01_canary_write_contract.md` | Canary payload schema + validation rules |
+| `docs/v7b/v7b01_rollback_checklist.md` | Rollback steps + emergency contacts |
+| `src/bridge/v7b/canaryValidator.ts` | Canary payload validator (fail-closed) |
+| `src/bridge/v7b/firstWriteAuditContract.ts` | Audit event shape for blocked canary attempts |
+| `src/bridge/v7b/operatorApprovalChecklist.ts` | Operator checklist (cannot itself authorize) |
+
+### What the Tests Cover (27 tests — authorized minimum: 20)
+
+**Canary payload validation (9 tests):**
+- Valid canary payload passes
+- Missing writeType rejected
+- Wrong schema version rejected
+- governed_state: true rejected
+- operator authorized: true rejected
+- v7bAuthorized: true rejected
+- networkWriteStatus: v7b-live-write rejected
+- execute_trade in payload rejected
+- Secret key pattern rejected
+
+**Authorization ceremony (5 tests):**
+- Ceremony cannot authorize v7B.1
+- Checklist starts incomplete
+- canAuthorizeV7B is false
+- All required items complete still cannot authorize
+- v7A.7 candidate lock cannot activate v7B.0.1
+
+**Audit event contract (3 tests):**
+- Blocked event has correct schema
+- v7bAuthorized: false in audit
+- Safety declarations correct
+
+**Rollback checklist (3 tests):**
+- Rollback doc exists
+- Authorization ceremony doc exists
+- Canary write contract doc exists
+
+**Credential & safety (3 tests):**
+- No credentials in environment
+- Kill switch fail-closed
+- v7B.0.1 scaffold blocks writes
+
+**Boundary enforcement (4 tests):**
+- No fetch() calls
+- No credential values
+- No executable live write path
+- Correct schema version
+
+### Running the Canary Plan
+
+```bash
+npm run bridge:canary-plan
+```
+
+### What v7B.0.1 Does NOT Do
+
+- ❌ Authorize v7B.1 live writes
+- ❌ Execute canary writes
+- ❌ Stage credentials in code
+- ❌ Connect to Open Brain
+- ❌ Enable the live write adapter
+- ❌ Create governed state
+
+---
+
 ## v7B.1 Future Scope (NOT YET AUTHORIZED)
 
 v7B would introduce live Open Brain observation writes:
@@ -828,6 +910,7 @@ git show-ref --tags | grep sfa-barbell-dashboard
 | `sfa-barbell-dashboard-v7a6-replay-dossier` | v7A.6 Replay Promotion Dossier + Governance Preflight |
 | `sfa-barbell-dashboard-v7a7-governance-rehearsal` | v7A.7 End-to-End Governance Rehearsal + v7B Candidate Lock |
 | `sfa-barbell-dashboard-v7b0-live-write-adapter` | v7B.0 Live Write Adapter Contract + Kill-Switch Scaffold |
+| `sfa-barbell-dashboard-v7b01-canary-plan` | v7B.0.1 Live Write Authorization Ceremony + Canary Plan |
 
 ---
 
