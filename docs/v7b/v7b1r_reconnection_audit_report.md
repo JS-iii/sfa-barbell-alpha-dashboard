@@ -1,9 +1,10 @@
 # v7B.1R: Open Brain Supabase Reconnection + Read-Only Audit Report
 
 **Phase:** v7B.1R — Read-Only Reconnaissance  
-**Seal:** Based on `662eddf` (v7B.1-live prep)  
+**Prep Seal:** `1103705` — `sfa-barbell-dashboard-v7b1r-live-final`  
+**Prior Seal:** `559aae0` — `sfa-barbell-dashboard-v7b1r-reconnection-audit`  
 **Date:** 2026-06-10  
-**Status:** Audit complete — live Supabase connection requires operator-staged credentials  
+**Status:** v7B.1R-live-prep accepted; live DB inventory pending operator-staged token  
 **Classification:** Read-only audit. No database writes. No schema mutations. No memory mutations.
 
 ---
@@ -28,6 +29,60 @@ v7B.1R is a read-only reconnaissance audit of the dormant Open Brain Supabase pr
 | Database table inventory | Requires live connection |
 | pgvector/vector extension check | Requires live connection |
 | Memory schema drift assessment | Requires live connection |
+| Hardened audit script with self-scan | ✅ Delivered at `1103705` |
+| PAT vs MCP safety review | ✅ Documented below |
+
+---
+
+## Safety Correction: PAT vs MCP
+
+### Important: PATs Carry Full User Privileges
+
+Supabase Personal Access Tokens (PATs) carry the **same privileges as the user account**. A PAT can read, write, create, and delete database objects if the user has those permissions.
+
+**The standalone audit script (`v7b1r-live-supabase-audit.mjs`) uses PAT via the Management API. This is a FALLBACK path only.**
+
+### Preferred Path: Supabase MCP with `read_only=true`
+
+Supabase MCP with `read_only=true`:
+- Executes queries through a **read-only Postgres user**
+- **Mutating tools are disabled** in read-only mode
+- Cannot INSERT, UPDATE, DELETE even if the user has write permissions
+- The MCP server enforces read-only at the protocol level
+
+### Why MCP is Safer
+
+| Property | MCP read_only=true | PAT (Fallback) |
+|----------|-------------------|----------------|
+| Query execution user | Read-only Postgres role | User's own role |
+| Mutating tools | Disabled | Available (if user has perms) |
+| INSERT/UPDATE/DELETE | Blocked by MCP | Would succeed if attempted |
+| Schema changes | Blocked by MCP | Would succeed if attempted |
+| Enforcement layer | MCP protocol | Script self-scan only |
+
+### Fallback Script Safety Guards
+
+If MCP is unavailable, the fallback script enforces these guards:
+
+| Guard | Implementation |
+|-------|---------------|
+| HTTP GET only | Whitelist: `["GET"]` |
+| Forbidden paths | Blacklist: `/query`, `/rpc`, `/rest/v1/`, `/auth/v1/`, `/storage/v1/`, `/functions/v1/` |
+| No raw SQL | No SQL execution functions in the script |
+| Self-scan | Detects forbidden keywords, mutating HTTP methods, direct fetch() calls |
+| JSDoc-aware | Correctly skips comment blocks |
+| Scope tracking | Brace-depth based function boundary detection |
+| Output redaction | Strips tokens/secrets from error responses |
+| Evidence redaction | Recursive object redaction before JSON save |
+
+### Self-Scan Results (at `1103705`)
+
+| Check | Result |
+|-------|--------|
+| Forbidden SQL keywords in executable code | None found ✅ |
+| Mutating HTTP methods (POST/PUT/PATCH) | None found ✅ |
+| Direct fetch() outside mgmtGet() | None found ✅ |
+| All fetch() through mgmtGet() wrapper | Confirmed ✅ |
 
 ---
 
