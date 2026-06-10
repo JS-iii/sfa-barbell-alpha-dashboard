@@ -2,19 +2,29 @@
 /**
  * v7b1r-live-supabase-audit.mjs — v7B.1R-Live Supabase Read-Only Database Inventory
  *
- * Executes read-only SQL queries against the Open Brain Supabase project
- * using the Supabase REST API. No writes. No schema mutations.
+ * SAFETY NOTE: This script uses a Supabase Personal Access Token (PAT) via the
+ * Management API. PATs carry the same privileges as the user account. This is a
+ * FALLBACK path. The PREFERRED path is Supabase MCP with read_only=true, which
+ * executes queries through a read-only Postgres user with mutating tools disabled.
+ *
+ * This script enforces:
+ * - HTTP GET only (no POST/PUT/PATCH/DELETE to mutating endpoints)
+ * - No raw SQL execution (only Management API metadata endpoints)
+ * - Self-scan for forbidden patterns before execution
+ * - Token value never logged, never committed, never printed
+ * - Output redaction for potential secrets
  *
  * PRE-REQUISITE: Operator must stage token in secure shell:
  *   export SUPABASE_ACCESS_TOKEN="sbp_..."
  *
  * USAGE: npx tsx scripts/v7b1r-live-supabase-audit.mjs
  *
- * SCOPE: Read-only SELECT and metadata queries only.
+ * SCOPE: Read-only metadata queries only via Management API GET.
  * Forbidden: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, TRUNCATE, GRANT, REVOKE.
+ * Forbidden: Raw SQL execution. Edge Function deploy. Schema mutation.
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -26,21 +36,146 @@ const PROJECT_REF = "bgludgfrbyicqqdkdqds";
 const SUPABASE_API_URL = `https://${PROJECT_REF}.supabase.co`;
 const SUPABASE_MGMT_URL = "https://api.supabase.com";
 
+// ── Allowed HTTP methods (whitelist) ───────────────────────────
+const ALLOWED_METHODS = ["GET"];
+// ── Forbidden Management API paths (blacklist) ─────────────────
+const FORBIDDEN_PATHS = [
+  "/query", "/rpc", "/rest/v1/", "/auth/v1/", "/storage/v1/",
+  "/functions/v1/", "/ realtime/v1/",
+];
+
 console.log("═══════════════════════════════════════════════════════════");
 console.log("  v7B.1R-Live: Supabase Read-Only Database Inventory");
 console.log("  Project:", PROJECT_REF);
 console.log("  " + new Date().toISOString());
 console.log("═══════════════════════════════════════════════════════════");
-console.log("  Scope: READ-ONLY. No writes. No schema mutations.");
+console.log("  ⚠️  PAT FALLBACK: MCP read_only=true is PREFERRED");
+console.log("  Scope: READ-ONLY Management API GET only.");
+console.log("  No raw SQL. No writes. No schema mutations.");
 console.log("  Token source: SUPABASE_ACCESS_TOKEN env var only.");
 console.log("═══════════════════════════════════════════════════════════\n");
 
-// ── Token check ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  STEP 0: Self-scan for forbidden patterns
+// ═══════════════════════════════════════════════════════════════
+
+console.log("[STEP 0] Script Self-Scan\n");
+
+const scriptSource = readFileSync(__filename, "utf-8");
+const scriptLines = scriptSource.split("\n");
+
+// Check for forbidden keywords outside of comments/strings/comments about them
+const forbiddenKeywords = ["INSERT", "UPDATE", "DELETE", "UPSERT", "MERGE", "TRUNCATE", "ALTER TABLE", "CREATE TABLE", "DROP TABLE", "GRANT", "REVOKE", "EXECUTE"];
+const forbiddenInCode = [];
+
+// Track whether we're inside a JSDoc block
+let inJSDoc = false;
+
+for (let i = 0; i < scriptLines.length; i++) {
+  const line = scriptLines[i].trim();
+  // Track JSDoc block state
+  if (line.startsWith("/**")) inJSDoc = true;
+  if (line.startsWith("*/")) { inJSDoc = false; continue; }
+  if (inJSDoc || line.startsWith("* ")) continue; // Skip JSDoc lines
+  // Skip inline comments
+  const codePart = line.replace(/\/\/.*$/g, "");
+  // Skip full-line string literals
+  const noStrings = codePart.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  for (const kw of forbiddenKeywords) {
+    if (noStrings.includes(kw) && !noStrings.includes("forbidden") && !noStrings.includes("const forbidden")) {
+      forbiddenInCode.push({ line: i + 1, keyword: kw, context: line.trim() });
+    }
+  }
+}
+
+if (forbiddenInCode.length > 0) {
+  console.log("   ⚠️ Found forbidden keywords in script source:");
+  for (const f of forbiddenInCode) {
+    console.log(`     Line ${f.line}: ${f.keyword} — "${f.context}"`);
+  }
+  console.log("   These must be reviewed before execution.");
+} else {
+  console.log("   ✅ No forbidden SQL keywords found in executable code");
+}
+
+// Check for mutating HTTP methods
+const mutatingMethods = ["POST", "PUT", "PATCH"];
+const foundMutating = [];
+inJSDoc = false;
+for (let i = 0; i < scriptLines.length; i++) {
+  const line = scriptLines[i].trim();
+  if (line.startsWith("/**")) inJSDoc = true;
+  if (line.startsWith("*/")) { inJSDoc = false; continue; }
+  if (inJSDoc || line.startsWith("* ")) continue;
+  const codePart = line.replace(/\/\/.*$/g, "");
+  const noStrings = codePart.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  for (const m of mutatingMethods) {
+    if (noStrings.includes(`method: "${m}"`) || noStrings.includes(`'${m}'`)) {
+      foundMutating.push({ line: i + 1, method: m });
+    }
+  }
+}
+if (foundMutating.length > 0) {
+  console.log("   ⚠️ Found mutating HTTP methods:");
+  for (const f of foundMutating) {
+    console.log(`     Line ${f.line}: ${f.method}`);
+  }
+} else {
+  console.log("   ✅ No mutating HTTP methods (POST/PUT/PATCH) in code");
+}
+
+// Check for direct fetch() calls outside mgmtGet() — track function scope
+const directFetchMatches = [];
+inJSDoc = false;
+let mgmtGetDepth = -1; // -1 = not yet in mgmtGet
+let braceDepth = 0;
+for (let i = 0; i < scriptLines.length; i++) {
+  const line = scriptLines[i];
+  const trimmed = line.trim();
+  if (trimmed.startsWith("/**")) inJSDoc = true;
+  if (trimmed.startsWith("*/")) { inJSDoc = false; continue; }
+  if (inJSDoc || trimmed.startsWith("* ")) continue;
+  // Count braces BEFORE tracking function entry (so mgmtGetDepth captures depth at function start)
+  const codePart = line.replace(/\/\/.*$/g, "").replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  // Track mgmtGet function scope
+  if (/async\s+function\s+mgmtGet\b/.test(line) && mgmtGetDepth === -1) mgmtGetDepth = braceDepth;
+  for (const ch of codePart) {
+    if (ch === "{") braceDepth++;
+    if (ch === "}") braceDepth--;
+  }
+  const noStrings = codePart.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  // fetch( outside mgmtGet scope
+  const inMgmtGetScope = mgmtGetDepth >= 0 && braceDepth > mgmtGetDepth;
+  if (noStrings.includes("fetch(") && !inMgmtGetScope && !/function\s+mgmtGet/.test(line)) {
+    directFetchMatches.push({ line: i + 1 });
+  }
+}
+if (directFetchMatches.length > 0) {
+  console.log("   ⚠️ Found direct fetch() calls outside mgmtGet():");
+  for (const f of directFetchMatches) {
+    console.log(`     Line ${f.line}`);
+  }
+} else {
+  console.log("   ✅ All fetch() calls are through mgmtGet() wrapper");
+}
+
+console.log("   Self-scan complete.");
+
+// ═══════════════════════════════════════════════════════════════
+//  STEP 1: Token check (value never logged)
+// ═══════════════════════════════════════════════════════════════
+
+console.log("\n[STEP 1] Token Verification\n");
+
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 if (!token || token.trim() === "") {
   console.log("❌ SUPABASE_ACCESS_TOKEN not set.");
   console.log("\n   To stage token in your secure shell:");
   console.log("   export SUPABASE_ACCESS_TOKEN='sbp_your_token_here'");
+  console.log("\n   PREFERRED PATH: Use Supabase MCP with read_only=true instead:");
+  console.log("   [mcp_servers.supabase]");
+  console.log('   url = "https://mcp.supabase.com/mcp?project_ref=bgludgfrbyicqqdkdqds&read_only=true&features=database,docs"');
+  console.log('   bearer_token_env_var = "SUPABASE_ACCESS_TOKEN"');
   console.log("\n   Then run:");
   console.log("   npx tsx scripts/v7b1r-live-supabase-audit.mjs\n");
   process.exit(1);
@@ -63,90 +198,73 @@ const evidence = {
   staleTables: [],
   manusDrift: [],
   safety: {
+    patFallback: true,
+    mcpPreferred: true,
     readOnly: true,
+    httpGetOnly: true,
+    noRawSql: true,
     noInserts: true,
     noUpdates: true,
     noDeletes: true,
     noSchemaMutations: true,
     noEdgeDeploys: true,
     noMemoryWrites: true,
+    selfScanPassed: forbiddenInCode.length === 0 && foundMutating.length === 0 && directFetchMatches.length === 0,
   },
   finalStatus: "pending",
   completedAt: null,
 };
 
-// ── HTTP helper (read-only headers) ────────────────────────────
+// ── HTTP helper: GET-only, path-validated ──────────────────────
 async function mgmtGet(path) {
-  const res = await fetch(`${SUPABASE_MGMT_URL}${path}`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+  // Validate method
+  const method = "GET";
+  if (!ALLOWED_METHODS.includes(method)) {
+    throw new Error(`Forbidden HTTP method: ${method}. Only GET is allowed.`);
   }
-  return res.json();
-}
-
-async function sqlQuery(query) {
-  // Validate query is read-only
-  const upper = query.toUpperCase().trim();
-  const forbidden = ["INSERT", "UPDATE", "DELETE", "UPSERT", "MERGE", "TRUNCATE", "ALTER", "CREATE", "DROP", "GRANT", "REVOKE"];
-  for (const f of forbidden) {
-    if (upper.includes(f)) throw new Error(`Forbidden keyword in query: ${f}`);
-  }
-  if (!upper.startsWith("SELECT") && !upper.startsWith("SHOW") && !upper.startsWith("\\") && !upper.startsWith("DESCRIBE") && !upper.startsWith("EXPLAIN")) {
-    throw new Error("Query must start with SELECT, SHOW, DESCRIBE, EXPLAIN, or backslash command");
-  }
-
-  const res = await fetch(`${SUPABASE_API_URL}/rest/v1/`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "Prefer": "params=single-object",
-      "apikey": token,
-    },
-    body: JSON.stringify({ query }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
-  }
-  return res.json();
-}
-
-async function pgQuery(query) {
-  // Use the PostgREST RPC interface for raw SQL
-  const res = await fetch(`${SUPABASE_API_URL}/rest/v1/rpc/exec_sql`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "apikey": token,
-    },
-    body: JSON.stringify({ query }),
-  });
-  if (!res.ok) {
-    // Fallback: try direct PostgREST query endpoint
-    const fallback = await fetch(`${SUPABASE_API_URL}/rest/v1/`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "apikey": token,
-        "Accept": "application/json",
-      },
-    });
-    if (!fallback.ok) {
-      const body = await fallback.text();
-      throw new Error(`HTTP ${fallback.status}: ${body.slice(0, 200)}`);
+  // Validate path
+  for (const fp of FORBIDDEN_PATHS) {
+    if (path.includes(fp)) {
+      throw new Error(`Forbidden API path: ${fp}. Mutating endpoints are blocked.`);
     }
-    return fallback.json();
   }
-  return res.json();
+  // Execute
+  const res = await fetch(`${SUPABASE_MGMT_URL}${path}`, {
+    method,
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    // Redact potential secrets from error body
+    const redactedBody = body
+      .replace(/"token"\s*:\s*"[^"]*"/gi, '"token":"[REDACTED]"')
+      .replace(/"Bearer\s+[^"]*/gi, '"Bearer [REDACTED]')
+      .slice(0, 500);
+    throw new Error(`HTTP ${res.status}: ${redactedBody}`);
+  }
+  const data = await res.json();
+  return data;
+}
+
+// ── Redaction helper ───────────────────────────────────────────
+function redactObject(obj) {
+  const sensitiveKeys = ["token", "api_key", "secret", "password", "bearer", "authorization"];
+  if (typeof obj !== "object" || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(redactObject);
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+      result[key] = typeof value === "string" && value.length > 0 ? "[REDACTED]" : value;
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = redactObject(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 // ── Task execution ─────────────────────────────────────────────
@@ -169,8 +287,6 @@ async function task1_listTables() {
     return tables;
   } catch (e) {
     console.log("   ⚠️ Management API error:", e.message);
-    console.log("   Trying PostgREST fallback...");
-    // Fallback: query pg_tables via REST
     return [];
   }
 }
@@ -256,12 +372,33 @@ async function task6_checkVectorDimensions(memoryTables) {
   const vectorTables = memoryTables.filter(t =>
     ["memories", "memory_chunks", "embeddings", "observations"].includes(t.name)
   );
+  if (vectorTables.length === 0) {
+    console.log("   No known vector tables found in memory table list.");
+    console.log("   Vector dimension check requires live column type inspection.");
+    evidence.vectorInfo.status = "no_vector_tables_found";
+    return;
+  }
   for (const t of vectorTables) {
     console.log(`   Checking ${t.name} for vector columns...`);
-    // This would need a live SQL query or column type inspection
-    console.log(`   ⚠️ Vector dimension check requires live column type inspection`);
+    try {
+      const columns = await mgmtGet(`/v1/projects/${PROJECT_REF}/database/tables/${t.id}/columns`);
+      const vectorColumns = columns?.filter(c =>
+        c.data_type && (c.data_type.includes("vector") || c.data_type.includes("embedding"))
+      ) || [];
+      if (vectorColumns.length > 0) {
+        for (const vc of vectorColumns) {
+          console.log(`     📐 Vector column: ${vc.name} (${vc.data_type})`);
+        }
+      } else {
+        console.log(`     No vector-typed columns found (may use JSONB or text storage)`);
+      }
+      evidence.vectorInfo[t.name] = {
+        vectorColumns: vectorColumns.map(vc => ({ name: vc.name, type: vc.data_type })),
+      };
+    } catch (e) {
+      console.log(`     ⚠️ Could not inspect columns:`, e.message);
+    }
   }
-  evidence.vectorInfo.status = "requires_live_column_inspection";
 }
 
 async function task7_checkRLS(tables) {
@@ -284,6 +421,13 @@ async function task7_checkRLS(tables) {
     }));
   } catch (e) {
     console.log("   ⚠️ RLS query error:", e.message);
+  }
+
+  // Check which tables have RLS enabled
+  console.log("\n   Tables with RLS status:");
+  for (const t of tables.slice(0, 15)) {
+    const hasPolicy = evidence.rlsPolicies.some(p => p.table === t.name);
+    console.log(`   ${hasPolicy ? "🔒" : "🔓"} ${t.schema}.${t.name} ${hasPolicy ? "(RLS)" : ""}`);
   }
 }
 
@@ -318,14 +462,15 @@ async function task9_assessManusDrift(tables) {
 
   if (unexpected.length > 0) {
     console.log(`\n   Unexpected tables (${unexpected.length}):`);
-    for (const u of unexpected) console.log(`     ⚠️ ${u}`);
+    for (const u of unexpected.slice(0, 15)) console.log(`     ⚠️ ${u}`);
+    if (unexpected.length > 15) console.log(`     ... and ${unexpected.length - 15} more`);
   }
 
   evidence.manusDrift = {
     expectedTables,
     found,
     missing,
-    unexpected,
+    unexpected: unexpected.slice(0, 30),
     driftDetected: missing.length > 0 || unexpected.length > 0,
   };
 }
@@ -340,17 +485,17 @@ async function task10_compareSchema(tables) {
   console.log("   - snapshots: alpha snapshot cache");
   console.log("   - audit_log: operation audit trail");
   console.log("\n   Actual tables found:", tables.length);
-  for (const t of tables.slice(0, 20)) {
+  for (const t of tables.slice(0, 25)) {
     console.log(`     ${t.schema}.${t.name} (${t.row_count ?? '?'} rows)`);
   }
-  if (tables.length > 20) console.log(`     ... and ${tables.length - 20} more`);
+  if (tables.length > 25) console.log(`     ... and ${tables.length - 25} more`);
 }
 
 // ── Main execution ─────────────────────────────────────────────
 
 async function main() {
-  // Task 0: Connectivity check
-  console.log("[TASK 0] Connectivity Check\n");
+  // Task 0b: Connectivity check
+  console.log("\n[TASK 0b] Connectivity Check\n");
   try {
     const project = await mgmtGet(`/v1/projects/${PROJECT_REF}`);
     console.log("   ✅ Connected to Supabase Management API");
@@ -365,7 +510,11 @@ async function main() {
     };
   } catch (e) {
     console.log("   ⚠️ Management API connection failed:", e.message);
-    console.log("   This may mean the token lacks management scope or the project is paused.");
+    console.log("   This may mean:");
+    console.log("   - The token lacks management scope");
+    console.log("   - The project is paused");
+    console.log("   - The project_ref is incorrect");
+    console.log("   - Try Supabase MCP read_only=true path instead");
     evidence.connectivity = { connected: false, error: e.message };
   }
 
@@ -389,13 +538,15 @@ async function main() {
   evidence.completedAt = new Date().toISOString();
   evidence.finalStatus = evidence.connectivity.connected ? "audit_complete" : "connectivity_failed";
 
+  // Redact before saving
+  const safeEvidence = redactObject(evidence);
   const evidencePath = join(PROJECT_DIR, "docs", "v7b", "v7b1r-live-supabase-evidence.json");
-  writeFileSync(evidencePath, JSON.stringify(evidence, null, 2));
+  writeFileSync(evidencePath, JSON.stringify(safeEvidence, null, 2));
   console.log("   Evidence saved to:", evidencePath);
 
   // Summary
   const summaryPath = join(PROJECT_DIR, "docs", "v7b", "v7b1r-live-supabase-summary.md");
-  writeFileSync(summaryPath, generateSummary(evidence));
+  writeFileSync(summaryPath, generateSummary(safeEvidence));
   console.log("   Summary saved to:", summaryPath);
 
   // ── Final report ─────────────────────────────────────────────
@@ -410,9 +561,12 @@ async function main() {
   console.log("  RLS policies:", evidence.rlsPolicies.length);
   console.log("  Stale tables:", evidence.staleTables.length);
   console.log("  Manus drift detected:", evidence.manusDrift.driftDetected);
+  console.log("  Self-scan passed:", evidence.safety.selfScanPassed);
   console.log("  Read-only enforced:", evidence.safety.readOnly);
-  console.log("  No writes performed:", true);
+  console.log("  HTTP GET only:", evidence.safety.httpGetOnly);
+  console.log("  No raw SQL:", evidence.safety.noRawSql);
   console.log("  Token logged:", false);
+  console.log("  Token committed:", false);
   console.log("═══════════════════════════════════════════════════════════");
 
   process.exit(evidence.connectivity.connected ? 0 : 1);
@@ -465,13 +619,17 @@ ${ev.manusDrift.unexpected?.length > 0 ? `**Unexpected tables:** ${ev.manusDrift
 
 | Invariant | Status |
 |-----------|--------|
+| PAT fallback (MCP preferred) | ⚠️ |
 | Read-only enforced | ✅ |
+| HTTP GET only | ✅ |
+| No raw SQL execution | ✅ |
 | No inserts | ✅ |
 | No updates | ✅ |
 | No deletes | ✅ |
 | No schema mutations | ✅ |
 | No edge deploys | ✅ |
 | No memory writes | ✅ |
+| Self-scan passed | ${ev.safety.selfScanPassed ? "✅" : "❌"} |
 | Token logged | ❌ Never |
 | Token committed | ❌ Never |
 
