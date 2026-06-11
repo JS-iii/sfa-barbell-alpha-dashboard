@@ -1,0 +1,83 @@
+{
+  "phase": "v7b1-live-canary-execution",
+  "startedAt": "2026-06-10T22:XX:XXZ",
+  "completedAt": "2026-06-10T22:XX:XXZ",
+  "operatorExecuted": true,
+  "projectRef": "bgludgfrbyicqqdkdqds",
+  "preflightChecks": {
+    "credentialsStaged": true,
+    "credentialsProjectId": false,
+    "killSwitchOpen": true,
+    "v7b1Authorized": true,
+    "gitHead": "e3eba30",
+    "gitClean": true,
+    "preflightPassed": true
+  },
+  "canaryPacket": {
+    "schemaVersion": "open-brain-canary-rc-v7b02",
+    "packetHash": "04c6dfdff81386d4430dd4d933d06b74f9016b70118c59fdb06d392f250dd67a",
+    "hashValid": true,
+    "idempotencyKey": "[redacted]",
+    "safetyDeclarations": {
+      "notExecutionAuthority": true,
+      "containsTradeOrders": false,
+      "containsWalletReferences": false,
+      "containsExecutionInstructions": false,
+      "containsCredentials": false,
+      "isGovernedState": false
+    },
+    "governanceAssertions": {
+      "requiresHumanReview": true,
+      "networkWriteStatus": "canary-write-only",
+      "v7bAuthorized": false
+    }
+  },
+  "writeResult": {
+    "success": false,
+    "blocked": false,
+    "blockedBy": null,
+    "timestamp": "2026-06-10T22:XX:XXZ",
+    "packetHash": "04c6dfdff81386d4430dd4d933d06b74f9016b70118c59fdb06d392f250dd67a",
+    "eventType": "canary_write_attempted",
+    "writeAttempted": true,
+    "serverResponse": {
+      "statusCode": 404,
+      "bodyPresent": true,
+      "bodyLength": 0,
+      "note": "Endpoint not configured for direct POST to base URL"
+    },
+    "error": {
+      "code": "HTTP_404",
+      "message": "Server returned 404 - endpoint not found"
+    },
+    "adapterPermanentlyLocked": true,
+    "adapterState": "locked"
+  },
+  "lockdownConfirmation": {
+    "writeAttempted": true,
+    "permanentlyLocked": true,
+    "isAdapterLocked": true,
+    "canAttemptWrite": false,
+    "secondWriteBlocked": true,
+    "secondWriteBlockedBy": "permanent_lock"
+  },
+  "credentialCleanup": {
+    "apiKeyUnset": true,
+    "endpointUrlUnset": true,
+    "projectIdUnset": true,
+    "v7b1AuthUnset": true,
+    "killSwitchClosed": true,
+    "credentialsClean": true
+  },
+  "postCanaryChecks": {
+    "credentialValuesNotLogged": true,
+    "credentialValuesNotCommitted": true,
+    "noSecretsInEvidence": true
+  },
+  "finalStatus": "canary_write_endpoint_not_configured",
+  "nextSteps": [
+    "Configure dedicated Open Brain write endpoint at OPENBRAIN_ENDPOINT_URL",
+    "Rotate exposed API key immediately",
+    "Re-attempt canary after endpoint is configured (requires new v7B.1 authorization)"
+  ]
+}
