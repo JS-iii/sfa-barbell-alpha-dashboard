@@ -1,0 +1,164 @@
+{
+  "phase": "v7b1r-live-supabase-audit",
+  "executedAt": "2026-06-10T22:33:00Z",
+  "operator": "jonnyblaze1x@gmail.com",
+  "projectRef": "bgludgfrbyicqqdkdqds",
+  "method": "supabase-web-sql-editor-read-only",
+  "safety": {
+    "readOnly": true,
+    "noInserts": true,
+    "noUpdates": true,
+    "noDeletes": true,
+    "noSchemaMutations": true,
+    "noEdgeDeploys": true,
+    "noMemoryWrites": true,
+    "noCanaryWrite": true,
+    "credentialsCommitted": false,
+    "credentialsLogged": false
+  },
+  "tables": [
+    {
+      "schema": "public",
+      "name": "memories",
+      "rowCount": 698,
+      "type": "memory"
+    },
+    {
+      "schema": "public",
+      "name": "products",
+      "rowCount": 5,
+      "type": "demo"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "vector",
+      "version": "0.8.0",
+      "installed": true,
+      "critical": true
+    }
+  ],
+  "migrations": [
+    {
+      "version": "20260312211034",
+      "name": "create_demo_products_table",
+      "createdBy": "jonnyblaze1x@gmail.com"
+    },
+    {
+      "version": "20260313203416",
+      "name": "open_brain_01_extension",
+      "note": "CREATE EXTENSION vector"
+    },
+    {
+      "version": "20260313203422",
+      "name": "open_brain_02_tables_indexes",
+      "note": "CREATE TABLE memories + indexes"
+    },
+    {
+      "version": "20260313203427",
+      "name": "open_brain_03_rls_policies",
+      "note": "RLS + policies for memories"
+    },
+    {
+      "version": "20260313203434",
+      "name": "open_brain_04_match_memories_function",
+      "note": "match_memories vector search function"
+    },
+    {
+      "version": "20260313203438",
+      "name": "open_brain_05_recent_memories_view",
+      "note": "recent_memories view"
+    },
+    {
+      "version": "20260316074958",
+      "name": "add_agent_role_chain_columns",
+      "note": "Added agent_role, chain, confidence_inherited, validated"
+    },
+    {
+      "version": "20260316075008",
+      "name": "add_agent_role_check_constraint",
+      "note": "CHECK agent_role IN ('teacher','trader')"
+    }
+  ],
+  "memorySchema": {
+    "table": "public.memories",
+    "columns": [
+      {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+      {"name": "content", "type": "TEXT", "nullable": false},
+      {"name": "metadata", "type": "JSONB", "nullable": false, "default": "'{}'::jsonb"},
+      {"name": "embedding", "type": "VECTOR(768)", "nullable": true},
+      {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+      {"name": "agent_role", "type": "TEXT", "nullable": true, "default": "'teacher'", "added": "20260316"},
+      {"name": "chain", "type": "TEXT", "nullable": true, "default": "'solana'", "added": "20260316"},
+      {"name": "confidence_inherited", "type": "BOOLEAN", "nullable": true, "default": false, "added": "20260316"},
+      {"name": "validated", "type": "BOOLEAN", "nullable": true, "default": false, "added": "20260316"}
+    ],
+    "indexes": [
+      {"name": "idx_memories_created_at", "type": "btree", "column": "created_at DESC"},
+      {"name": "idx_memories_metadata", "type": "GIN", "column": "metadata"},
+      {"name": "idx_memories_embedding", "type": "ivfflat", "column": "embedding vector_cosine_ops", "lists": 100}
+    ],
+    "rls": {
+      "enabled": true,
+      "policies": [
+        {"name": "service_role_full_access", "action": "ALL", "role": "service_role", "using": "true", "withCheck": "true"},
+        {"name": "authenticated_read", "action": "SELECT", "role": "authenticated", "using": "true"}
+      ]
+    },
+    "constraints": [
+      {"name": "memories_pkey", "type": "PRIMARY KEY", "column": "id"},
+      {"name": "memories_agent_role_check", "type": "CHECK", "expression": "agent_role IN ('teacher', 'trader')"}
+    ],
+    "functions": [
+      {"name": "match_memories", "purpose": "vector_similarity_search", "returns": "TABLE(id UUID, content TEXT, metadata JSONB, similarity FLOAT, created_at TIMESTAMPTZ)"}
+    ],
+    "views": [
+      {"name": "recent_memories", "definition": "SELECT id, content, metadata, created_at FROM memories ORDER BY created_at DESC LIMIT 100"}
+    ]
+  },
+  "vectorInfo": {
+    "extension": "vector",
+    "extensionVersion": "0.8.0",
+    "dimensions": 768,
+    "column": "memories.embedding",
+    "indexType": "ivfflat",
+    "distanceMetric": "vector_cosine_ops",
+    "indexLists": 100,
+    "compatibleModels": ["sentence-transformers/all-mpnet-base-v2", "BAAI/bge-base-en"],
+    "incompatibleModels": ["text-embedding-ada-002 (1536d)", "text-embedding-3-small (1536d)"]
+  },
+  "manusDrift": {
+    "expectedTables": ["observations", "memories", "memory_chunks", "conversations", "snapshots", "audit_log"],
+    "foundTables": ["memories"],
+    "missingTables": ["observations", "memory_chunks", "conversations", "snapshots", "audit_log"],
+    "unexpectedTables": ["products"],
+    "driftDetected": true,
+    "driftDetails": [
+      "Only 1 of 6 expected memory tables exists",
+      "Missing: observations, memory_chunks, conversations, snapshots, audit_log",
+      "Unexpected: products (demo data unrelated to Open Brain)",
+      "Post-creation ALTER TABLE added agent_role, chain, confidence_inherited, validated columns",
+      "agent_role CHECK constraint restricts to 'teacher'/'trader' — 'observer' value would be rejected",
+      "chain column defaults to 'solana' — non-portable default"
+    ]
+  },
+  "staleAssessment": {
+    "memories": {"status": "active", "rowCount": 698, "note": "Contains 698 memory records — actively used"},
+    "products": {"status": "dormant_demo", "rowCount": 5, "note": "Demo data unrelated to Open Brain — should be removed or marked"}
+  },
+  "recommendation": {
+    "v7b1LiveCanary": "GO — canary write uses OPENBRAIN_ENDPOINT_URL (dedicated endpoint), not direct Supabase. Database state does not block canary.",
+    "supabaseIntegration": "CONDITIONAL GO — memories table exists with pgvector and RLS. But schema drift requires reconciliation before production use.",
+    "requiredBeforeProduction": [
+      "Create observations table for observation storage",
+      "Resolve 768d vs 1536d vector dimension mismatch (pick compatible embedding model)",
+      "Remove or document 'products' demo table",
+      "Add 'observer' to agent_role CHECK or remove constraint",
+      "Create memory_chunks, conversations, snapshots, audit_log tables if needed",
+      "Review 'chain' column default ('solana') for portability"
+    ],
+    "blockers": [
+      "None for v7B.1-live canary (uses dedicated endpoint, not Supabase)"
+    ]
+  }
+}
