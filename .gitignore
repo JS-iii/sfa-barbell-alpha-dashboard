@@ -25,3 +25,4 @@ dist-ssr
 
 # Dry-run logs (generated during tests, should not leave working tree dirty)
 data/dry-run/*.jsonl
+.env.openbrain
