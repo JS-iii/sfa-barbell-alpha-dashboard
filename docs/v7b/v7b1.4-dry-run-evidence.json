@@ -1,0 +1,70 @@
+{
+  "phase": "v7b1.4-manual-promotion-dry-run",
+  "date": "2026-06-12T06:51:30.108Z",
+  "sampleProposal": {
+    "id": "2f803832-1fe6-440b-a64c-2d85349a555c",
+    "contentPreview": "Market breadth deteriorated on 2026-06-12. Advance-decline ratio fell below 1.0 for the first time i...",
+    "source": "v7b1.4-dry-run-sample",
+    "confidence": 0.82,
+    "tags": [
+      "macro",
+      "breadth",
+      "defensive"
+    ]
+  },
+  "validation": {
+    "passed": true,
+    "checkCount": 13
+  },
+  "safety": {
+    "safe": true,
+    "flags": []
+  },
+  "review": {
+    "status": "approved_for_manual_write",
+    "reviewer": "operator-v7b1.4"
+  },
+  "packet": {
+    "packetId": "pkt-2f803832-1fe6-440b-a64c-2d85349a555c",
+    "readyForExecution": true,
+    "hasSql": true,
+    "hasRest": true
+  },
+  "checksums": {
+    "proposalContent": "e719554dc5dbe7ca22fcf538bfb102a97a565429de16981056e49e762816cabb",
+    "proposalMetadata": "a52ca2df0e74c9bff8a397cd0b3650efa513b918a871262de88d6ec4bc93c96f",
+    "governanceFlags": "aa7bf2f71e12bf1aa95531c44154dff3ac7a7976c6d84400d4bd043ce69f7963",
+    "validationResult": "2145f98e0809bc917997a0258a020fc755cf7e89c5e4bb297ce7e0460da47763",
+    "safetyResult": "ef5345be02d64f113b13b4ce7ce5cc4edb6635d1d7fd896ee9058d8402572129",
+    "reviewLedger": "edf82cc4c538aae0fd8f63967e6d1732a0d6e95ff1bbf2da7d1b5e30ac28c17d",
+    "sqlStatement": "4002d42b032abc4d5bbedec12bbd2a093427ed6c4ea0f473bdb9dde6ba837509",
+    "restPayload": "00921c0a9d2009e741f66f3e400536b1fb637dd1a02796a4b66f210a99ab056f",
+    "fullPacket": "71f109a75c37e706f87a13db5340fac68d6b240ad754bb794c7f068b4132ab68"
+  },
+  "noExecutionProof": {
+    "hasFetch": false,
+    "hasEval": false,
+    "hasExec": false,
+    "hasNewFunction": false,
+    "packetHasFunctions": false,
+    "sqlIsString": true
+  },
+  "truthTable": {
+    "safeProposalCreated": true,
+    "proposalValidated": true,
+    "humanApproved": true,
+    "dryRunPacketGenerated": true,
+    "sqlRestPreviewGenerated": true,
+    "liveDbWriteOccurred": false,
+    "packetSelfExecutes": false,
+    "credentialsExposed": false,
+    "v7b15Authorized": false,
+    "v7b2Authorized": false
+  },
+  "tests": {
+    "passed": 32,
+    "failed": 0,
+    "total": 32
+  },
+  "finalStatus": "dry_run_complete_all_tests_passed"
+}

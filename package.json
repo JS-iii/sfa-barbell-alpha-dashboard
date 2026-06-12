@@ -23,7 +23,8 @@
     "bridge:canary-plan": "node scripts/bridge-canary-plan.mjs",
     "bridge:canary-rc": "node scripts/bridge-canary-rc.mjs",
     "bridge:open-brain-canary": "node scripts/bridge-open-brain-canary.mjs",
-    "v7b1.3:proposal-queue": "node scripts/v7b1.3-memory-proposal-queue.mjs"
+    "v7b1.3:proposal-queue": "node scripts/v7b1.3-memory-proposal-queue.mjs",
+    "v7b1.4:dry-run": "node scripts/v7b1.4-dry-run.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
