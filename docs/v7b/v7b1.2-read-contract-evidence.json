@@ -1,0 +1,122 @@
+{
+  "phase": "v7b1.2-open-brain-read-contract",
+  "startedAt": "2026-06-12T05:44:55.801Z",
+  "endpoint": "https://bgludgfrbyicqqdkdqds.supabase.co/rest/v1/memories",
+  "canaryId": "d4c9812b-7455-41bb-b382-15e65b1c3ff4",
+  "projectRef": "bgludgfrbyicqqdkdqds",
+  "safety": {
+    "readOnly": true,
+    "selectOnly": true,
+    "noMutation": true,
+    "noExecutionAuthority": true,
+    "advisoryOnly": true,
+    "writePathDisabled": true
+  },
+  "retrieval": {
+    "success": false,
+    "reason": "no_credentials",
+    "note": "use_cloud_sql_editor"
+  },
+  "governanceClassification": null,
+  "tests": {
+    "selectOnly": {
+      "passed": 8,
+      "failed": 0
+    },
+    "redaction": {
+      "passed": 8,
+      "failed": 0
+    },
+    "governance": {
+      "passed": 8,
+      "failed": 0
+    },
+    "total": {
+      "passed": 24,
+      "failed": 0
+    }
+  },
+  "finalStatus": "read_contract_and_governance_verified",
+  "ingestionContract": {
+    "version": "v7b1.2",
+    "scope": "advisory-context-only",
+    "rules": [
+      {
+        "rule": "Memory may inform context",
+        "allowed": true
+      },
+      {
+        "rule": "Memory may not override policy",
+        "allowed": false
+      },
+      {
+        "rule": "Memory may not create trades",
+        "allowed": false
+      },
+      {
+        "rule": "Memory may not alter risk gates",
+        "allowed": false
+      },
+      {
+        "rule": "Memory may not authorize execution",
+        "allowed": false
+      },
+      {
+        "rule": "Memory may not become governed state",
+        "allowed": false
+      }
+    ],
+    "enforcement": "script-level",
+    "override": "none \u2014 human operator required for all exceptions"
+  },
+  "liveEvidence": {
+    "retrievedAt": "2026-06-12T05:31:04.689Z",
+    "method": "supabase-web-sql-editor",
+    "queriesExecuted": 4,
+    "canaryRow": {
+      "id": "d4c9812b-7455-41bb-b382-15e65b1c3ff4",
+      "content": "v7B.1.1-canary | corrected-endpoint | 2026-06-12 05:31:04.68925+00",
+      "metadata": {
+        "seal": "sfa-barbell-dashboard-v7b1.1-canary",
+        "source": "v7b1.1-canary",
+        "version": "7.1.1",
+        "isGovernedState": false,
+        "containsTradeOrders": false,
+        "notExecutionAuthority": true
+      },
+      "createdAt": "2026-06-12T05:31:04.689Z"
+    },
+    "governanceClassification": {
+      "status": "SAFE",
+      "isGovernedState": false,
+      "containsTradeOrders": false,
+      "notExecutionAuthority": true,
+      "flags": []
+    },
+    "governedStateScan": {
+      "governedRowsFound": 0,
+      "tradeRowsFound": 0,
+      "result": "No dangerous rows found"
+    },
+    "tableHealth": {
+      "totalRows": 699,
+      "canaryRows": 1,
+      "governedRows": 0,
+      "tradeRows": 0,
+      "latestRow": "2026-06-12T05:31:04.689Z"
+    }
+  },
+  "truthTable": {
+    "correctEndpointUsed": true,
+    "canaryWriteAccepted": true,
+    "canaryReadbackVerified": true,
+    "actualOpenBrainWrite": true,
+    "governanceClassifiedSafe": true,
+    "noGovernedStateRows": true,
+    "noTradeRows": true,
+    "credentialsExposed": false,
+    "writePathDisabled": true,
+    "v7B2Authorized": false
+  },
+  "completedAt": "2026-06-12T05:31:04.689Z"
+}
