@@ -1,0 +1,113 @@
+{
+  "phase": "v7B.1.5",
+  "phaseName": "One Manually Approved Proposal Write",
+  "executedAt": "2026-06-12T07:28:08.071Z",
+  "liveWriteConfirmedAt": "2026-06-12T21:54:28.458Z",
+  "scope": "One manually approved Open Brain memory write only",
+  "operator": "v7B.1.5-operator",
+  "proposal": {
+    "id": "9fdb0e43-f83f-4672-af32-3150e2deb930",
+    "content": "Open Brain memory proposal queue requires human approval before promotion. Retrieved memory is advisory context only and never execution authority.",
+    "contentLength": 147,
+    "embeddingDimension": 768,
+    "metadata": {
+      "version": "v7B.1.5",
+      "source": "manual-promotion",
+      "confidence": 0.95,
+      "proposalId": "e5ee48f5-f80f-45ca-a701-1107212e7335",
+      "dryRunId": "3863504c-db7a-4751-853c-92e6a7b2112f",
+      "tags": ["governance", "operational", "non-trading"]
+    }
+  },
+  "validation": {
+    "passed": true,
+    "failures": [],
+    "checkCount": 13
+  },
+  "safetyClassification": {
+    "safe": true,
+    "flags": [],
+    "advisoryOnly": true
+  },
+  "reviewLedger": {
+    "initialStatus": "proposed",
+    "finalStatus": "approved_for_manual_write",
+    "reviewer": "v7B.1.5-operator",
+    "approvedAt": "2026-06-12T07:28:08.064Z"
+  },
+  "packet": {
+    "scope": "ONE_INSERT_ONLY",
+    "readyForExecution": true,
+    "checksums": {
+      "sql": "04dabf67bf585d00932da544a3e717f266a8ced5dae1581f5ee5d94aa459bf29",
+      "content": "12b840ef847e94bd7ee37a61ba65b5edaf1e2fd3aa9ffb69589ab8ff617e0c11",
+      "id": "3be6d90ddae64f3a86e4747a906661f994f92267a60f81d91407126a6e33476d"
+    },
+    "schemaCorrection": {
+      "originalSqlIncludedSourceColumn": true,
+      "actualTableColumns": ["id", "content", "embedding", "metadata", "created_at"],
+      "correctedSqlUsed": "array_fill(0, ARRAY[768])::vector for embedding, no source column"
+    },
+    "generatedAt": "2026-06-12T07:28:08.065Z"
+  },
+  "noExecutionProof": {
+    "proven": true,
+    "violations": [],
+    "method": "line-by-line scope analysis, forbidden patterns only flagged outside test() calls"
+  },
+  "liveResults": {
+    "rowInserted": true,
+    "rowId": "9fdb0e43-f83f-4672-af32-3150e2deb930",
+    "readbackVerified": true,
+    "readbackContent": "Open Brain memory proposal queue requires human approval before promotion. Retrieved memory is advisory context only and never execution authority.",
+    "readbackMetadata": {
+      "tags": ["governance", "operational", "non-trading"],
+      "source": "manual-promotion",
+      "version": "v7B.1.5",
+      "dryRunId": "3863504c-db7a-4751-853c-92e6a7b2112f",
+      "confidence": 0.95,
+      "proposalId": "e5ee48f5-f80f-45ca-a701-1107212e7335"
+    },
+    "totalRowsBefore": 699,
+    "totalRowsAfter": 700,
+    "rowsInserted": 1,
+    "governedRows": 0,
+    "tradeRows": 0,
+    "executionMethod": "Supabase SQL Editor (manual operator execution)",
+    "writePathLockedAfter": true
+  },
+  "governanceClassification": {
+    "safe": true,
+    "flags": [],
+    "advisoryOnly": true,
+    "isGovernedState": false,
+    "containsTradeOrders": false,
+    "notExecutionAuthority": true,
+    "containsCredentials": false,
+    "containsWalletReferences": false,
+    "isStrategyInstruction": false
+  },
+  "credentialExposure": {
+    "sqlContainsCredentials": false,
+    "evidenceContainsCredentials": false,
+    "writeContentContainsCredentials": false,
+    "redactionApplied": true
+  },
+  "testResults": {
+    "passed": 44,
+    "failed": 0,
+    "total": 44
+  },
+  "bridgeSuite": {
+    "passed": 38,
+    "failed": 0,
+    "total": 38
+  },
+  "authorizationBoundary": {
+    "v7b1.6_authorized": false,
+    "v7b2_authorized": false,
+    "live_writes_after_this": false,
+    "recurring_writes": false,
+    "schema_mutations": false
+  }
+}

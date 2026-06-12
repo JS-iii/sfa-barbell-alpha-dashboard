@@ -1,0 +1,65 @@
+{
+  "phase": "v7B.1.5",
+  "phaseName": "One Manually Approved Proposal Write",
+  "executedAt": "2026-06-12T07:28:08.071Z",
+  "scope": "One manually approved Open Brain memory write only",
+  "proposal": {
+    "id": "9fdb0e43-f83f-4672-af32-3150e2deb930",
+    "contentLength": 147,
+    "embeddingDimension": 768,
+    "source": "v7B.1.5-one-approved-write",
+    "metadata": {
+      "version": "v7B.1.5",
+      "source": "manual-promotion",
+      "confidence": 0.95,
+      "proposalId": "e5ee48f5-f80f-45ca-a701-1107212e7335",
+      "dryRunId": "3863504c-db7a-4751-853c-92e6a7b2112f",
+      "tags": [
+        "governance",
+        "operational",
+        "non-trading"
+      ]
+    }
+  },
+  "validation": {
+    "passed": true,
+    "failures": [],
+    "checkCount": 13
+  },
+  "safetyClassification": {
+    "safe": true,
+    "flags": [],
+    "advisoryOnly": true
+  },
+  "reviewLedger": {
+    "initialStatus": "proposed",
+    "finalStatus": "approved_for_manual_write",
+    "reviewer": "v7B.1.5-operator",
+    "approvedAt": "2026-06-12T07:28:08.064Z"
+  },
+  "packet": {
+    "scope": "ONE_INSERT_ONLY",
+    "readyForExecution": true,
+    "checksums": {
+      "sql": "04dabf67bf585d00932da544a3e717f266a8ced5dae1581f5ee5d94aa459bf29",
+      "content": "12b840ef847e94bd7ee37a61ba65b5edaf1e2fd3aa9ffb69589ab8ff617e0c11",
+      "id": "3be6d90ddae64f3a86e4747a906661f994f92267a60f81d91407126a6e33476d"
+    },
+    "sqlPreview": "INSERT INTO public.memories (id, content, embedding, metadata, source, created_at)\nVALUES (\n  '9fdb0e43-f83f-4672-af32-3150e2deb930',\n  'Open Brain memory proposal queue requires human approval before...",
+    "generatedAt": "2026-06-12T07:28:08.065Z"
+  },
+  "noExecutionProof": {
+    "proven": true,
+    "violations": []
+  },
+  "governancePreClassification": {
+    "safe": true,
+    "flags": [],
+    "advisoryOnly": true
+  },
+  "writeContent": "Open Brain memory proposal queue requires human approval before promotion. Retrieved memory is advisory context only and never execution authority.",
+  "credentialExposure": {
+    "sqlContainsCredentials": false,
+    "evidenceContainsCredentials": false
+  }
+}
