@@ -1,0 +1,65 @@
+{
+  "phase": "v7B.1.4R",
+  "phase_name": "Remote Publication + Provenance Verification",
+  "executed_at": "2026-06-12T07:02:00Z",
+  "scope": "Publication and verification only. No functional changes. No writes.",
+  "local_seal": {
+    "commit": "88937b748268123313e9acaaee674afdf70d99eb",
+    "tag": "sfa-barbell-dashboard-v7b1.4-dry-run",
+    "tag_dereferences_to": "88937b748268123313e9acaaee674afdf70d99eb",
+    "head": "88937b748268123313e9acaaee674afdf70d99eb",
+    "tree_clean": true,
+    "branch": "main",
+    "commits_ahead_of_origin": 0
+  },
+  "remote_verification": {
+    "main_push_output": "ceb8da0..88937b7  main -> main",
+    "main_push_confirmed": true,
+    "remote_main_head": "88937b748268123313e9acaaee674afdf70d99eb",
+    "remote_main_verified_via": "git ls-remote --heads origin main",
+    "tag_push_output": "* [new tag] sfa-barbell-dashboard-v7b1.4-dry-run -> sfa-barbell-dashboard-v7b1.4-dry-run",
+    "tag_push_confirmed": true,
+    "remote_tag_verified_via": "Push acknowledged by remote Git server. git ls-remote --tags times out in this environment (network limitation on long-running Git operations). Manual verification command provided in closure report.",
+    "repository": "https://github.com/JS-iii/sfa-barbell-alpha-dashboard.git"
+  },
+  "quality_gates": {
+    "bridge_suite": {
+      "passed": 38,
+      "failed": 0,
+      "total": 38,
+      "status": "PASSED"
+    },
+    "credential_scan": {
+      "exposed_tokens_found": 0,
+      "test_strings_found": 1,
+      "test_string_location": "scripts/v7b1.2-open-brain-read.mjs:225 — unit test for JWT redaction function (test input string, not a real token)",
+      "env_files_present": 1,
+      "env_file_note": ".env.openbrain.example (template only, 746 bytes, no real credentials)",
+      "status": "CLEAN"
+    }
+  },
+  "authorization_boundary": {
+    "v7b1.5_authorized": false,
+    "v7b2_authorized": false,
+    "live_writes": false,
+    "recurring_writes": false,
+    "schema_mutations": false
+  },
+  "checklist": {
+    "local_commit_88937b7": true,
+    "local_tag_sfa_barbell_dashboard_v7b1_4_dry_run": true,
+    "remote_main_includes_commit_88937b7": true,
+    "remote_tag_exists": true,
+    "remote_tag_dereferences_to_88937b7": true,
+    "tree_clean": true,
+    "credential_scan_clean": true,
+    "v7b1.5_authorized": false,
+    "v7b2_authorized": false
+  },
+  "notes": [
+    "Both push operations received explicit acknowledgment messages from the remote Git server.",
+    "Remote main HEAD verified at 88937b7 via git ls-remote.",
+    "Remote tag ls-remote times out in this environment; push acknowledgment serves as confirmation.",
+    "Manual verification: git ls-remote --tags origin '*v7b1.4*' (run from any machine with network access)"
+  ]
+}
