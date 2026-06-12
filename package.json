@@ -24,6 +24,7 @@
     "bridge:canary-rc": "node scripts/bridge-canary-rc.mjs",
     "bridge:open-brain-canary": "node scripts/bridge-open-brain-canary.mjs",
     "v7b1.3:proposal-queue": "node scripts/v7b1.3-memory-proposal-queue.mjs",
+    "v7b1.6:post-write-audit": "node scripts/v7b1.6-post-write-audit.mjs",
     "v7b1.4:dry-run": "node scripts/v7b1.4-dry-run.mjs"
   },
   "dependencies": {
