@@ -1,0 +1,60 @@
+{
+  "phase": "v7b1.1-corrected-endpoint-canary",
+  "executedAt": "2026-06-12T05:31:04Z",
+  "operator": "cloud-sql-editor",
+  "method": "supabase-web-sql-editor",
+  "projectRef": "bgludgfrbyicqqdkdqds",
+  "endpointEquivalent": "public.memories (SQL Editor) = /rest/v1/memories (PostgREST)",
+  "safety": {
+    "readOnlyPreflight": true,
+    "noInsertsBeyondCanary": true,
+    "noSchemaMutations": true,
+    "noCredentialExposure": true,
+    "dashboardAuth": true,
+    "serviceRoleKeyNotUsed": true,
+    "isGovernedState": false,
+    "containsTradeOrders": false,
+    "notExecutionAuthority": true
+  },
+  "canaryWrite": {
+    "attempted": true,
+    "table": "public.memories",
+    "id": "d4c9812b-7455-41bb-b382-15e65b1c3ff4",
+    "content": "v7B.1.1-canary | corrected-endpoint | 2026-06-12 05:31:04.68925+00",
+    "metadata": {
+      "seal": "sfa-barbell-dashboard-v7b1.1-canary",
+      "source": "v7b1.1-canary",
+      "version": "7.1.1",
+      "isGovernedState": false,
+      "containsTradeOrders": false,
+      "notExecutionAuthority": true
+    },
+    "vectorDim": 768,
+    "insertSuccess": true,
+    "endpointIsBaseUrl": false
+  },
+  "canaryReadback": {
+    "attempted": true,
+    "success": true,
+    "query": "SELECT id, content, metadata, created_at FROM public.memories WHERE content LIKE 'v7B.1.1-canary%' ORDER BY created_at DESC LIMIT 5",
+    "rowsFound": 1,
+    "id": "d4c9812b-7455-41bb-b382-15e65b1c3ff4",
+    "content": "v7B.1.1-canary | corrected-endpoint | 2026-06-12 05:31:04.68925+00",
+    "createdAt": "2026-06-12T05:31:04.689Z"
+  },
+  "truthTable": {
+    "correctEndpointUsed": true,
+    "canaryWriteAccepted": true,
+    "canaryReadbackVerified": true,
+    "actualOpenBrainWrite": true,
+    "credentialsExposed": false,
+    "secondWriteAllowed": false,
+    "v7B2ChangesIncluded": false
+  },
+  "lockdown": {
+    "note": "Script-level lockdown verified in v7B.1 (adapter permanently locked after first attempt)",
+    "adapterLocked": true,
+    "secondWriteBlocked": true
+  },
+  "finalStatus": "canary_write_and_readback_verified"
+}
