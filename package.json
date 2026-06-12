@@ -22,7 +22,8 @@
     "bridge:live-write-adapter": "node scripts/bridge-live-write-adapter.mjs",
     "bridge:canary-plan": "node scripts/bridge-canary-plan.mjs",
     "bridge:canary-rc": "node scripts/bridge-canary-rc.mjs",
-    "bridge:open-brain-canary": "node scripts/bridge-open-brain-canary.mjs"
+    "bridge:open-brain-canary": "node scripts/bridge-open-brain-canary.mjs",
+    "v7b1.3:proposal-queue": "node scripts/v7b1.3-memory-proposal-queue.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

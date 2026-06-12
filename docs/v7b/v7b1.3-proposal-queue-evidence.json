@@ -1,0 +1,25 @@
+{
+  "phase": "v7b1.3-memory-proposal-queue",
+  "date": "2026-06-12T06:37:35.846Z",
+  "tests": {
+    "passed": 40,
+    "failed": 0,
+    "total": 40
+  },
+  "sections": {
+    "safeProposals": 5,
+    "unsafeProposals": 7,
+    "malformedProposals": 6,
+    "reviewLedger": 8,
+    "promotionPackets": 6,
+    "workflowIntegration": 4,
+    "redaction": 4
+  },
+  "safety": {
+    "writePathDisabled": true,
+    "localOnly": true,
+    "humanReviewRequired": true,
+    "autoWriteForbidden": true,
+    "v7b2Authorized": false
+  }
+}
