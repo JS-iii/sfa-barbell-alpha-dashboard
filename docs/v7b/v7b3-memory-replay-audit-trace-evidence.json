@@ -1,0 +1,46 @@
+{
+  "phase": "v7B.3",
+  "phaseName": "Memory Retrieval Replay + Deterministic Audit Trace",
+  "executedAt": "2026-06-12T23:12:18.512Z",
+  "scope": "Read-only replay/audit. No writes.",
+  "fixtures": {
+    "total": 13,
+    "advisorySafe": 3,
+    "prohibited": 2,
+    "tradingSensitive": 2,
+    "governanceSensitive": 3,
+    "stale": 1,
+    "lowConfidence": 1,
+    "corrupted": 1
+  },
+  "replays": {
+    "runsPerFixture": 5,
+    "total": 65
+  },
+  "testResults": {
+    "passed": 59,
+    "failed": 0,
+    "total": 59
+  },
+  "acceptanceGates": {
+    "replayDeterministic": true,
+    "everyRetrievalHasAuditTrace": true,
+    "everyFirewallActionHasReasonCodes": true,
+    "advisoryPayloadsIncludeProvenance": true,
+    "excludedRowsCannotLeak": true,
+    "noWritePathReopens": true,
+    "noRecurringPath": true,
+    "noExecutionSurface": true,
+    "testsPass": true
+  },
+  "modulesCreated": [
+    "replayFixtures.ts",
+    "auditTrace.ts",
+    "determinismVerifier.ts"
+  ],
+  "authorizationBoundary": {
+    "v7b3_authorized": true,
+    "v7b4_authorized": false,
+    "no_writes": true
+  }
+}
