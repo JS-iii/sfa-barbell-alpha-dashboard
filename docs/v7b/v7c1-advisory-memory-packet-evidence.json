@@ -1,0 +1,43 @@
+{
+  "phase": "v7C.1",
+  "phaseName": "Advisory Memory Context Packet Integration",
+  "executedAt": "2026-06-13T01:13:40.420Z",
+  "scope": "Read-only integration. No writes.",
+  "fixtures": 12,
+  "classified": 12,
+  "inPacket": 3,
+  "boundary": {
+    "advisorySafeCount": 3,
+    "staleCount": 0,
+    "blockedCount": 4,
+    "quarantinedCount": 3,
+    "excludedCount": 2,
+    "totalEvaluated": 12
+  },
+  "testResults": {
+    "passed": 51,
+    "failed": 0,
+    "total": 51
+  },
+  "acceptanceGates": {
+    "packetIntegrationReadOnly": true,
+    "advisorySafeOnlyInBody": true,
+    "blockedCannotLeak": true,
+    "everyItemHasProvenance": true,
+    "packetCannotAuthorizeTrades": true,
+    "packetCannotAuthorizeGovernance": true,
+    "packetCannotAuthorizeWrites": true,
+    "auditTraceReproducible": true,
+    "noRecurringPath": true,
+    "testsPass": true
+  },
+  "modulesCreated": [
+    "advisoryMemoryPacket.ts",
+    "advisoryPacketRenderer.ts"
+  ],
+  "authorizationBoundary": {
+    "v7c1_authorized": true,
+    "v7c2_authorized": false,
+    "no_writes": true
+  }
+}

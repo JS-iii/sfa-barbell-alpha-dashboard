@@ -1,0 +1,22 @@
+═══ ADVISORY MEMORY CONTEXT ═══
+Version: v7C.1.0 | Generated: 2026-06-13T01:13:40.425Z
+[ADVISORY ONLY — Cannot authorize any action]
+
+Context Items: 3
+── 1. arch-docs ──
+  Architecture uses event sourcing.
+  Confidence: 90%
+── 2. test-report ──
+  Canary tests pass. No credential exposure.
+  Confidence: 80%
+── 3. governance-mem ──
+  Open Brain memory is advisory context only.
+  Confidence: 95%
+
+── Classification Boundary ──
+  Advisory-safe: 3 (included)
+  Blocked: 4 (excluded)
+  Quarantined: 3 (excluded)
+  Excluded: 2 (excluded)
+  Total: 12
+[Read-only | No execution authority]
