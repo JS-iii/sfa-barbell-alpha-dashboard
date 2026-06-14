@@ -28,6 +28,7 @@
     "v7b2:readonly-memory-firewall": "node scripts/v7b2-readonly-memory-firewall.mjs",
     "v7b3:memory-replay-audit-trace": "node scripts/v7b3-memory-replay-audit-trace.mjs",
     "v7c1:advisory-memory-packet": "node scripts/v7c1-advisory-memory-packet.mjs",
+    "v7c2:live-ops-context": "node scripts/v7c2-live-ops-context.mjs",
     "v7b1.4:dry-run": "node scripts/v7b1.4-dry-run.mjs"
   },
   "dependencies": {
